@@ -30,19 +30,30 @@ void displayLoop() {
   }
 
   display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
- // display.println("Knob: "  + String(knob.read() % 255));
-  display.println("tempo:" + String(tempo) );
-  display.println("steps/beat: " + String(stepsPerBeat) );
-  display.println("instrument: "  + String(instrument));
-// display.println("tempoBool: " + String(tempoBool));
-// display.println("loopTimer: " + String(loopTimer));
-  // display.println("Knob1: "  + String(knob1Buffer));
-  // display.println("Knob2: "  + String(knob2Buffer));
-  display.println("Step: " + String(selectedStep) + " Length: " + stepLength[selectedStep]);
-  display.println("Note: " + String(midiNotes[stepPitch[selectedStep]]) + " Velocity: " + String(stepVelocity[selectedStep]));
 
+  display.setTextColor(WHITE);
+
+  display.setCursor(0,0);
+  display.println(String(instrumentNames[instrument+1]));
+
+  display.println("tempo:" + String(tempo));
+  display.println("s: " + String(activeStep) + "lt: " + String(lengthTracker));
+  display.println("lastActiveStep: " + String(lastActiveStep));
+  
+  if (stepLength[selectedStep] == 1) {
+    display.println("Step: " + String(selectedStep) + " -  " + stepLength[selectedStep] + " beat");
+  } else {
+    display.println("Step: " + String(selectedStep) + " " + stepLength[selectedStep] + " beats");
+  }
+  if (stepActive[selectedStep] == true){
+    display.println("Pitch: " + String(midiNotes[stepPitch[selectedStep]]) + " Vel: " + String(stepVelocity[selectedStep]));
+  } else {
+    display.println("Rest Step");
+  }
+  display.println("sequenceLength: " + String(sequenceLength));
+
+  
+   /*
   display.print("Buttons: ");
   if (button0.depressed){
     display.print("0 ");
@@ -64,7 +75,7 @@ void displayLoop() {
   }
   
   display.println("");
-  /*
+ 
 
   display.print("Steps: ");
     
@@ -72,7 +83,7 @@ void displayLoop() {
     display.print(String(stepPitch[i]) + " " );
   }
 
-  display.println("Current Step: "  + String( sequenceStep + 1 ) );
+  display.println("Current Step: "  + String( activeStep + 1 ) );
   display.println("selectedStep:" + String(selectedStep));
   display.println("knob.read():" + String(knob1.read()));
 
@@ -83,7 +94,7 @@ void displayLoop() {
   }
     */
 
-  display.println("\navgPeriod:" + String(avgPeriod));
+  display.println("avgPeriod:" + String(avgPeriod));
 
   display.display();
 }

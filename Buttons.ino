@@ -44,8 +44,28 @@ void buttonLoop(){
       instrumentPrevious = instrument;
     }
     buttonPreviousState[4] = 0;
-    instrument = knob1Buffer + instrumentPrevious;
+    instrument = (knob1Buffer + instrumentPrevious) %127;
     synth.programChange(0, 0, instrument);
+  } else if(button2.depressed) {
+   
+    if (buttonPreviousState[1] == 1) {
+      knob1.write(0);
+      stepLengthBuffer = stepLength[selectedStep];
+    }
+    buttonPreviousState[1] = 0;
+    stepLength[selectedStep] = knob1Buffer + stepLengthBuffer;
+
+  } else if (button3.depressed) {
+    
+
+    if (buttonPreviousState[1] == 1) {
+      knob1.write(0);
+      sequenceLengthBuffer = sequenceLength;
+    }
+    buttonPreviousState[1] = 0;
+    sequenceLength = knob1Buffer + sequenceLengthBuffer;
+
+
   } else if(button1.depressed) {
     if (buttonPreviousState[1] == 1) {
       knob1.write(0);

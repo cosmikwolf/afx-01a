@@ -1,94 +1,160 @@
 void timerInterrupt(){
 	// this timer runs once every millisecond 
+  Serial.println("interrupt start");
 
-  if (elapsedTimer > (60*1000000/tempo)-1000 ) {
-    sequencer();
-    //stepper();
+  if ( sequenceTimer > (60*1000000/tempo)/4 ){
+    lengthTracker += 1;
+    sequenceTimer = 0;
   }
-/*
-   this timer runs at every beat of the midi clock.
-  
-   two experiments should be run:
-		 At each beat, the events up to and including 
-  	 the next beat should be scheduled.
-   or
-  	 at each beat, the events up until the next beat
-  	 should be scheduled. This includes events at the beat itself. 
 
-	NEW IDEA:
-		Each step has a length
-		There no 'steps per beat' anymore
-		each step plays for a division of a beat from 128 beats up to 1/16 of a beat (maybe 1/32?)
-		Each sequence must be able to be 1024 beats long max
-		Max 64 steps still stands
-		
-		There need to be two things that are kept track of for this:
-			When the sequence starts and stops
-			The length of each step stored in mcs in an array
+  stepper();
 
-		elapsedMicros sequenceTimer
-		elapsedMicros stepTimer
+  if (tempoTimer > (60*1000000/tempo)) {
+ 	  tempoTimer = 0;
+ 	  tempoBool = true;
+  } else if ( tempoTimer > (60*1000000/tempo)/2 ) {
+    if (tempoBool == true) {
+      tempoBool = false;
+    }
+  }
+  Serial.println("interrupt end");
 
-		for a 16 beat sequence at 120bpm 
-		when sequenceTimer reaches 8 seconds,
-		sequenceTimer is reset to 0 and the sequence is restarted
-
-		For each step, 
-		when stepTimer reaches the length of time for the current step,
-		stepTimer is reset to 0 and the next step is played
-		if the last step is reached, the sequence should start again from the beginning
-		it could also be reversed depending on sequence settings.
-
-	Beat calculations should be executed before the note instructions are executed.
-
-   Latency for each scenario should be measured
-   Start / Stop should function as expected without too much
-   extra calculations. 
-
- 	 Simpler is better.
- 	 Need to determine a way to keep time.
- 	 Each trigger should be calculated in microseconds since the beat
-
- 	 Also need to think about time drift. There should be a master clock
- 	 that is reset to 0 when the sequence is restarted, or when the tempo is changed.
- 	 this master clock should keep track of when the beats should be based on
- 	 when the sequence was triggered, and ensure that what is playing reflects what 
- 	 should be happening. If there is a drift, it should correct it.
-
- 	 This master clock should also keep time with external midi sync, if present.
-*/
- if (tempoTimer > (60*1000000/tempo)) {
- 	tempoTimer = 0;
- 	tempoBool = !tempoBool;
- }
 }
 
-void sequencer(void)
-{
-  elapsedTimer = 0;
- // Timer1.setPeriod(50*knob.read());
+void stepper() {
+  Serial.println("stepper start");
+  // every timerInterrupt, run the stepper subroutine
+  // to check if the stepTimer has elapsed, and if it
+  // has, it should trigger the notes, and then it 
+  // should reset the stepTimer.
+  // stepper also should check to see if there between 
+  // 1-2 ms until stepTimer elapses, so it should turn off
+  // the gate signal, so that at the next iteration,
+  // the gate signal can be turned back on.
+
   avgPeriod = ( avgPeriod + (int(micros()-lastRunTime)))/2;
   lastRunTime = micros();
-  color++ ;//knob.read();
-  color = color % 255;
+
+  if (stepTimer > stepLength[activeStep]*(60*1000000/tempo)/4) {
+    // change the note
+    // increment activeStep
+    // turn the gate on if step is active
+    // reset stepTimer
+
+
+    // TO DO:
+    //    Design UI to set all step information for each step.
+    //    this needs to be put where stepActive and setLength are set;
+    programmedLength = 0;
+    lastActiveStep = 0;
+
+    for (int n = 0; n < 128; n++){
+      if (stepActive[n]){
+        programmedLength += stepLength[n];
+        lastActiveStep = n;
+      }
+    }
+
+    if ( lengthTracker >= sequenceLength ){
+      // if the sequence has ended, go back to the beginning
+      activeStep = 0;
+      lengthTracker = 0;
+    } else if ( lengthTracker == lastActiveStep+1  ) {
+      // if the sequence is repeating, go back to the beginning
+      activeStep = 0;
+    } else {
+      activeStep += 1;
+    }
+
+    if (stepActive[activeStep]){
+      synth.noteOn(0, stepPitch[activeStep], 64);   
+    }
+    stepTimer = 0;
+  }
+
+  if (stepTimer > (stepLength[activeStep]-2000)) {
+    // turn gate off if step is active
+    if (stepActive[activeStep]){
+      synth.noteOff(0, stepPitch[activeStep]);   
+    }
+  }
 
   for (int i=0; i < NUMPIXELS; i++){
-    if (i == (sequenceStep+1)%numSteps ) {
-      pixels.setPixelColor(numSteps-1-i, pixels.Color(255,255,255) );      
+    if (i == (activeStep) ) {
+      pixels.setPixelColor(numSteps-i-1, pixels.Color(255,255,255) );      
     } else if ( i == selectedStep) {
 
     } else {
-      pixels.setPixelColor(numSteps-1-i, Wheel( stepPitch[i]%12 * 10 ) );
+      pixels.setPixelColor(numSteps-i-1, Wheel( stepPitch[i] ) );
     }
   }
 
   pixels.show();
 
-  sequenceStep++;
-  sequenceStep = sequenceStep % numSteps;
+  Serial.println("stepper end");
+
+}
+
+void sequencer(void)
+{
+    // every beat,
+    //  run the sequencer to determine what notes
+    //  need to be played over the next beat
+
+  elapsedTimer = 0;
+
+  // need to know which steps are going to happen 
+  // over the next beat
+  // we know BPM
+  // we know the steps of the sequence
+  // and how long each is.
+
+  // beat:    0  1  2  3  4  5  6  7
+  // step:    0  1  2     3     4  5
+  // length:  1  1  2  -  2  -  1  1 
+
+/// SCENERIO 1: steps are not based on relative beats
+  // sequenceLength:  1 measure (4 beats) 
+  //  - only 3 beats are populated with notes
+  //  - sequencer will repeat the first beat to fill the space 
+  // if sequence length was 1/2 a measure (2 beats)
+  //  - the step scheduler would need to determine how many steps need to be scheduled
+  //  - only the first 6 steps would play 
+  // length is in 1/16th notes
+  // beat:         0               1               2               3
+  // step          0   1   4       2   3   5       6   7   5   
+  // length:       1   1   2       1   1   2       1   1   2
+  // stepActive:   X   X   X       -   X   -       -   X   -  
+  // stepPitch:    34  34  53      52  43  35      35  32  35 
+  // stepVelocity: 53  51  125     53  64  12      35  59  12 
+/// SCENERIO 2: steps are based on beats <<<--- Gonna do this one, its easier to start with
+  // sequenceLength:  1 measure (4 beats) 
+  //  - only 3 beats are populated with notes
+  //  - sequencer will repeat the first beat to fill the space 
+  // if sequence length was 1/2 a measure (2 beats)
+  //  - the step scheduler would need to determine how many steps need to be scheduled
+  //  - only the first 6 steps would play 
+  // length is in 1/16th notes
+  // beat:         0               1               2               3
+  // step          0   1   2   3   4   5   6   7   8   9   10   
+  // length:       1   1   2   1   1   1   2   1   1   1   2
+  // stepActive:   X   X   X   -   -   X   -   -   -   X   -  
+  // stepPitch:    34  34  53  0   52  43  35  0   35  32  35 
+  // stepVelocity: 53  51  125 0   53  64  12  0   35  59  12 
+
+  // step scheduler routine needs to figure out what steps 
+  // 
+  // Timer1.setPeriod(50*knob.read());
+  color++ ;//knob.read();
+  color = color % 255;
+
+
+/*
+  activeStep++;
+  activeStep = activeStep % numSteps;
 
   synth.allNotesOff(0);
-  synth.noteOn(0, stepPitch[sequenceStep], 64);   
-
+  synth.noteOn(0, stepPitch[activeStep], 64);   
+*/
 }
 
