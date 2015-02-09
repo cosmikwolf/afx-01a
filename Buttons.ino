@@ -15,6 +15,7 @@ void buttonSetup() {
 }
 
 void buttonLoop(){
+  Serial.print("buttondebugstart");
 
   button1.Update();
   button2.Update();
@@ -26,7 +27,7 @@ void buttonLoop(){
 
   knob2Buffer = (knob2.read()-knob2InitValue) / -4;
   knob1Buffer = (knob1.read()) / -4;  
-  stepPitch[selectedStep] = abs(currentStepInitPitch + knob2Buffer);
+  //stepPitch[selectedStep] = abs(currentStepInitPitch + knob2Buffer);
 
   if (button5.clicks != 0) {
     // use mode one when the first button is pressed
@@ -37,34 +38,21 @@ void buttonLoop(){
     currentStepInitPitch = stepPitch[selectedStep];
   }
   
+
   // Start modifier button hold sections
-  if(button4.depressed) {
-    if (buttonPreviousState[4] == 1) {
-      knob1.write(0);
-      instrumentPrevious = instrument;
-    }
-    buttonPreviousState[4] = 0;
-    instrument = (knob1Buffer + instrumentPrevious) %127;
-    synth.programChange(0, 0, instrument);
-  } else if(button2.depressed) {
-   
-    if (buttonPreviousState[1] == 1) {
-      knob1.write(0);
-      stepLengthBuffer = stepLength[selectedStep];
-    }
-    buttonPreviousState[1] = 0;
-    stepLength[selectedStep] = knob1Buffer + stepLengthBuffer;
+      noInterrupts();
 
-  } else if (button3.depressed) {
-    
+  if(button0.depressed) {
 
-    if (buttonPreviousState[1] == 1) {
+    if (buttonPreviousState[0] == 1) {
       knob1.write(0);
-      sequenceLengthBuffer = sequenceLength;
+      knob2.write(0);
+      previousTempo = tempo;
     }
-    buttonPreviousState[1] = 0;
-    sequenceLength = knob1Buffer + sequenceLengthBuffer;
 
+    buttonPreviousState[0] = 0;
+    tempo = knob1Buffer + previousTempo;
+    //selectedSequence = knob2Buffer % 3;
 
   } else if(button1.depressed) {
     if (buttonPreviousState[1] == 1) {
@@ -73,17 +61,44 @@ void buttonLoop(){
     }
     buttonPreviousState[1] = 0;
     stepsPerBeat = knob1Buffer + previousStepsPerBeat;
-  } else if(button0.depressed) {
-    if (buttonPreviousState[0] == 1) {
+  } else if(button2.depressed) {
+   
+    if (buttonPreviousState[1] == 1) {
       knob1.write(0);
-      previousTempo = tempo;
+      stepLengthBuffer = sequence[selectedSequence]._gateLength[selectedStep];
     }
-    buttonPreviousState[0] = 0;
-    tempo = knob1Buffer + previousTempo;
+    buttonPreviousState[1] = 0;
+    sequence[selectedSequence].setGateLength(selectedStep, knob1Buffer + stepLengthBuffer);
+
+  } else if (button3.depressed) {
+  
+    if (buttonPreviousState[1] == 1) {
+      knob1.write(0);
+      sequenceLengthBuffer = sequenceLength;
+    }
+    buttonPreviousState[1] = 0;
+    sequenceLength = knob1Buffer + sequenceLengthBuffer;
+
+  } else if(button4.depressed) {
+    if (buttonPreviousState[4] == 1) {
+      knob1.write(0);
+      instrumentPrevious = sequence[selectedSequence].instrument;
+    }
+    buttonPreviousState[4] = 0;
+    sequence[selectedSequence].changeInstrument((knob1Buffer + instrumentPrevious) %127);
+
   } else {
     buttonPreviousState[0] = 1;
     buttonPreviousState[1] = 1;
+    sequence[selectedSequence].setStepPitch(selectedStep,  abs(currentStepInitPitch + knob2Buffer) );
   }
+    interrupts();
+
+  if (button1.clicks == 1){
+    selectedSequence = (selectedSequence +1) %3;
+    knob2.write(0);
+  }; 
+  
   // end modifier button hold sections
 
   if (button0.clicks != 0) {
@@ -104,5 +119,6 @@ void buttonLoop(){
   if (button5.clicks != 0) {
     clicks[5] += 1;
   }
+  Serial.print("buttondebugend");
 
 }

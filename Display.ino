@@ -1,4 +1,5 @@
 void startupSequence(){
+
   display.clearDisplay();   // clears the screen and buffer
 
   display.display(); // show splashscreen
@@ -18,6 +19,7 @@ void startupSequence(){
   pixels.setBrightness(64);
 }
 void displayLoop() {
+  Serial.println("displayStart");
   display.clearDisplay();   // clears the screen and buffer
 
     display.drawTriangle( 120,0,
@@ -28,75 +30,55 @@ void displayLoop() {
                           113,9,
                           127,9, WHITE);
   }
+Serial.println("displaydebug1");
 
   display.setTextSize(1);
 
   display.setTextColor(WHITE);
+Serial.println("displaydebug2");
 
   display.setCursor(0,0);
-  display.println(String(instrumentNames[instrument+1]));
+  display.println(String(instrumentNames[sequence[selectedSequence].instrument+1]));
+  display.println("tempo:" + String(sequence[selectedSequence]._tempo));
+  display.println("as: " + String(sequence[selectedSequence].activeStep) + " ct: " + String(sequence[selectedSequence].clockTracker));
+  display.println("sequenceLength: " + String(sequence[selectedSequence]._sequenceLength));
+Serial.println("displaydebug3");
 
-  display.println("tempo:" + String(tempo));
-  display.println("s: " + String(activeStep) + "lt: " + String(lengthTracker));
   display.println("lastActiveStep: " + String(lastActiveStep));
-  
+ /* 
   if (stepLength[selectedStep] == 1) {
-    display.println("Step: " + String(selectedStep) + " -  " + stepLength[selectedStep] + " beat");
+    display.println("Step: " + String(selectedStep) + " -  " + sequence[selectedSequence]._gateLength[selectedStep] + " beat");
   } else {
-    display.println("Step: " + String(selectedStep) + " " + stepLength[selectedStep] + " beats");
+    display.println("Step: " + String(selectedStep) + " " + sequence[selectedSequence]._gateLength[selectedStep] + " beats");
   }
+Serial.println("displaydebug4");
+
   if (stepActive[selectedStep] == true){
-    display.println("Pitch: " + String(midiNotes[stepPitch[selectedStep]]) + " Vel: " + String(stepVelocity[selectedStep]));
+    display.println("Pitch: " + String(midiNotes[sequence[selectedSequence]._stepPitch[selectedStep]]) + " Vel: " + String(sequence[selectedSequence]._stepVelocity[selectedStep]));
   } else {
     display.println("Rest Step");
   }
-  display.println("sequenceLength: " + String(sequenceLength));
-
-  
-   /*
-  display.print("Buttons: ");
-  if (button0.depressed){
-    display.print("0 ");
-  }
-  if (button1.depressed){
-    display.print("1 ");
-  }
-  if (button2.depressed){
-    display.print("2 ");
-  }
-  if (button3.depressed){
-    display.print("3 ");
-  }
-  if (button4.depressed){
-    display.print("4 ");
-  }
-  if (button5.depressed){
-    display.print("5 ");
-  }
-  
-  display.println("");
- 
-
-  display.print("Steps: ");
-    
-  for (int i=0; i < 8; i++){
-    display.print(String(stepPitch[i]) + " " );
-  }
-
-  display.println("Current Step: "  + String( activeStep + 1 ) );
-  display.println("selectedStep:" + String(selectedStep));
-  display.println("knob.read():" + String(knob1.read()));
-
-
-  
-  for (int i; i < 6; i++){
-      display.println("Button" + String(i) + "; "  + String( clicks[i] ) );
-  }
-    */
+*/
+Serial.println("displaydebug5");
 
   display.println("avgPeriod:" + String(avgPeriod));
+Serial.println("display debug 6");
 
+  display.println("avgLoopTime:" + String(avgLoopTime));
+  display.println("avgRuntime:" + String(avgRuntime));
+  display.setTextSize(2);
+  display.setCursor(100,0);
+Serial.println("display debug 7");
+
+  display.print(String(selectedSequence));
+Serial.println("display debug 8");
+  
+  noInterrupts();
   display.display();
+Serial.println("display debug 9");
+
+  interrupts();
+Serial.println("displayLoopEnd");
 }
 
 void ledLoop(){

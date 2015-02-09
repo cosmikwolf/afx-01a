@@ -1,13 +1,26 @@
 void timerInterrupt(){
 	// this timer runs once every millisecond 
   Serial.println("interrupt start");
+  // this is used to measure the average run time between loops
+  runTimer = 0;
+  
+  avgPeriod = ( avgPeriod + (int(micros()-lastRunTime)))/2;
+  lastRunTime = micros();
 
-  if ( sequenceTimer > (60*1000000/tempo)/4 ){
-    lengthTracker += 1;
-    sequenceTimer = 0;
+  for (int i=0; i<3; i++){
+    if ( sequence[i]._sequenceTimer > (60*1000000/sequence[i]._tempo)/sequence[i]._stepDivider ){
+      sequence[i].incrementClockTracker();
+      sequence[i].resetSequenceTimer();
+      //pixelRender();
+    }
   }
 
-  stepper();
+  // the single sequence way of doin it
+  //stepper();
+  // the multi sequence way..
+  sequence[0].runSequence();
+  sequence[1].runSequence();
+  sequence[2].runSequence();
 
   if (tempoTimer > (60*1000000/tempo)) {
  	  tempoTimer = 0;
@@ -17,9 +30,27 @@ void timerInterrupt(){
       tempoBool = false;
     }
   }
+
+  avgRuntime = (9*avgRuntime+int(runTimer))/10;  
   Serial.println("interrupt end");
 
 }
+
+void pixelRender(){
+   for (int i=0; i < NUMPIXELS; i++){
+    if (i == (sequence[selectedSequence].activeStep) ) {
+      pixels.setPixelColor(numSteps-i-1, pixels.Color(255,255,255) );      
+    } else if ( i == selectedStep) {
+
+    } else {
+      pixels.setPixelColor(numSteps-i-1, Wheel( sequence[selectedSequence].getStepPitch(i) ) );
+    }
+  }
+
+  pixels.show();
+}
+
+
 
 void stepper() {
   Serial.println("stepper start");
@@ -32,9 +63,7 @@ void stepper() {
   // the gate signal, so that at the next iteration,
   // the gate signal can be turned back on.
 
-  avgPeriod = ( avgPeriod + (int(micros()-lastRunTime)))/2;
-  lastRunTime = micros();
-
+  /*
   if (stepTimer > stepLength[activeStep]*(60*1000000/tempo)/4) {
     // change the note
     // increment activeStep
@@ -78,30 +107,16 @@ void stepper() {
       synth.noteOff(0, stepPitch[activeStep]);   
     }
   }
-
-  for (int i=0; i < NUMPIXELS; i++){
-    if (i == (activeStep) ) {
-      pixels.setPixelColor(numSteps-i-1, pixels.Color(255,255,255) );      
-    } else if ( i == selectedStep) {
-
-    } else {
-      pixels.setPixelColor(numSteps-i-1, Wheel( stepPitch[i] ) );
-    }
-  }
-
-  pixels.show();
+*/
+ 
 
   Serial.println("stepper end");
 
 }
 
-void sequencer(void)
-{
     // every beat,
     //  run the sequencer to determine what notes
     //  need to be played over the next beat
-
-  elapsedTimer = 0;
 
   // need to know which steps are going to happen 
   // over the next beat
@@ -145,8 +160,8 @@ void sequencer(void)
   // step scheduler routine needs to figure out what steps 
   // 
   // Timer1.setPeriod(50*knob.read());
-  color++ ;//knob.read();
-  color = color % 255;
+  //color++ ;//knob.read();
+ // color = color % 255;
 
 
 /*
@@ -156,5 +171,5 @@ void sequencer(void)
   synth.allNotesOff(0);
   synth.noteOn(0, stepPitch[activeStep], 64);   
 */
-}
+
 

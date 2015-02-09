@@ -2,31 +2,57 @@
 #define Sequencer_h
 
 #include "Arduino.h"
+#include <Fluxamasynth.h>
 
 class Sequencer
 {
 	public:	
 		Sequencer();
 		
-		void initialize(uint8_t ch, uint8_t seqLength);
+		void initialize(uint8_t ch, uint8_t seqLength,uint8_t divider, uint16_t tempo, uint8_t instrumentSelection, Fluxamasynth synth1);
 		void setSequenceLength(uint8_t steps);
+		void setTempo(uint8_t bpm);
 		void setScale(uint8_t scaleIndex);		
 		void setStepPitch(uint8_t step, uint8_t pitch);
 		void setGateLength(uint8_t step, uint8_t length);
 		void setGateType(uint8_t step, uint8_t gate);
 		void setStepVelocity(uint8_t step, uint8_t velocity);
 		void setStepGlide(uint8_t step, uint8_t glideTime);
-		void setStepLength(float length);
-
-	private:
-		uint8_t _sequenceLength;  		// sequence length in 1/16th notes
-		uint8_t _channel;
-		uint8_t _stepPitch[128];      // the pitch the step will play
+		void setStepDivider(uint8_t divider);
+		void changeInstrument(uint8_t selection);
+		void incrementClockTracker();
+		void resetClockTracker();
+		void resetStepTimer();
+		void resetSequenceTimer();
+		void runSequence();
+		uint8_t getStepPitch(uint8_t step);
+		uint8_t clockTracker;		// keeps track of how long the sequence has been playing
+		uint8_t	activeStep;
+    unsigned long stepTimerMcs[128];		// an array of microsecond values for each step
+    unsigned long _stepLengthMcs;
 		uint8_t _gateLength[128];     // the length of the gate in 1/16th note
 		uint8_t _gateType[128];       // type of gate. 0 for note deactivated, 1 for normal gate, 2 for dashed gate
+		uint8_t instrument = 39;
+		Fluxamasynth synth;
+		bool testBoolean;
+		void calculateLastActiveSteps();
+		void calculateStepTimers();
+		void calculateStepLengthMcs();
+		uint8_t _sequenceLength;  		// sequence length in 1/16th notes
+		uint16_t _tempo;
+		uint8_t _channel;
+		uint8_t _stepPitch[128];      // the pitch the step will play
 		uint8_t _stepVelocity[128];   // the velocity of the step
 		uint8_t	_stepGlide[128];			// 0-128 value that defines the fraction of the gate length that the note glides
-		float		_stepLength;					// fraction of a beat that is a step. 
+		uint8_t	_stepDivider;					// fraction of a beat that is a step.
+		uint8_t _programmedLength;
+    uint8_t _lastActiveStep;
+
+		elapsedMicros _stepTimer;			// timer for step to step
+		elapsedMicros _sequenceTimer; // timer for sequence interval to sequence interval
+
+	private:
+
 };
 
 #endif

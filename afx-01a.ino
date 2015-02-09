@@ -10,7 +10,7 @@
 #include <ClickButton.h>
 #include <Fluxamasynth.h>
 #include <PgmChange.h>
-
+#include <Sequencer.h>
 // Encoder Stuff
 #define ENCODER1LEFTPIN 18
 #define ENCODER1RIGHTPIN 19
@@ -87,8 +87,8 @@ uint16_t previousStepsPerBeat = 2;
 int8_t gateType[128];
 uint8_t currentStepInitPitch = 0;
 unsigned long lastRunTime = 0;
-int avgPeriod = 349;
-
+int avgPeriod = 0;
+int avgRuntime = 0;
 uint8_t sequenceLength = 12;   // sequence length in 1/16th notes
 bool    stepActive[128] = {1,1,1,1,1,1,1,1};         // which steps are active
 uint8_t stepPitch[128];        // the pitch the step will play
@@ -99,27 +99,36 @@ uint8_t activeStep = 0;       // the active step playing
 uint8_t lengthTracker = 0;      // number of 1/16th notes since play
 uint8_t lastActiveStep = 0;   // the last active step in the stack
 uint8_t programmedLength = 0;
-
-uint8_t stepLengthBuffer;
-uint8_t sequenceLengthBuffer;
 elapsedMicros sequenceTimer;
 elapsedMicros stepTimer;
-elapsedMicros elapsedTimer = 0;
-uint16_t timerInterruptInterval = 502;
+elapsedMicros pixelTimer;
+elapsedMicros displayTimer;
+uint8_t stepLengthBuffer;
+uint8_t sequenceLengthBuffer;
+uint16_t timerInterruptInterval = 700;
+
+uint8_t selectedSequence = 0;
 
 elapsedMicros tempoTimer = 0;
 bool tempoBool = false;
-
 elapsedMicros loopTimer = 0;
+int avgLoopTime = 0;
+
+elapsedMicros runTimer = 0;
 // Lets Begin!
 
+Sequencer sequence[3];
+
 void setup(){
+
+  sequence[0].initialize(0, 16, 4, tempo, 39, synth);
+  sequence[1].initialize(1, 16, 4, tempo, 41, synth);
+  sequence[2].initialize(2, 16, 4, tempo, 52, synth);
 
   Serial.begin(9600);
   Serial1.begin(31250);
   Serial.println("Begin Program");
   synth.setMasterVolume(255);
-  synth.programChange(0, 0, instrument);
   pixels.begin();
 
   display.begin(SSD1306_SWITCHCAPVCC);
@@ -135,14 +144,26 @@ void setup(){
 }
 
 void loop(){
+  avgLoopTime = (loopTimer + 99*avgLoopTime)/100;
+  loopTimer = 0;
   Serial.println("Loop Start");
   buttonLoop();
   Serial.println("Button Loop Complete");
   ledLoop();
   Serial.println("LED Loop Complete");
-  displayLoop();
-  Serial.println("Display Loop Complete");
-  loopTimer =0;
+//  if (displayTimer > 1000){
+    displayLoop();
+    Serial.println("Display Loop Complete");
+    displayTimer = 0;
+//  }
+  if (pixelTimer > 10000) {
+      Serial.print("pixelTimerStart");
+    pixelRender();
+    pixelTimer = 0;
+      Serial.print("PixeltimerEnd");
+  }
+  Serial.print("LoopEnd");
+
 }
 
 
