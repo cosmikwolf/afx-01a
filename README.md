@@ -3,17 +3,17 @@ AFX-01 Sequencer
 
 The beginnings of an open source hardware sequencer project based on the Teensy 3.1 and an Atmel SAM2695 sound chip.
 
-Hardware (subject to change)
-	- Teensy 3.1 Microcontroller
-	- Atmel SAM2695 Sound Chip
-	- 128x64 OLED Graphic LCD
-	- 8x8 RGB LED note indicators
-	- 8 vertical buttons
-	- 8 horizontal buttons
-	- 3x Rotary Encoders
-	- 4x mode buttons
+- Hardware (subject to change)
+	-  Teensy 3.1 Microcontroller
+	-  Atmel SAM2695 Sound Chip
+	-  128x64 OLED Graphic LCD
+	-  8x8 RGB LED note indicators
+	-  8 vertical buttons
+	-  8 horizontal buttons
+	-  3x Rotary Encoders
+	-  4x mode buttons
 
-Feature Intentions:
+- Feature Intentions:
 	- MIDI sync
 	- Live Arpeggiation Mode
 	- Live Sequence Transpose Mode
@@ -42,17 +42,16 @@ Feature Intentions:
 
 VARIOUS NOTES ABOUT THE PROJECT:
 
-sequencer notes
 Objective
   To create a device which will allow one to compose music on the fly without a computer, intended to sequence synthesizers in a live or studio setting. 
 
-Simple Sample player
+- Simple Sample player
    - ability to play simple instruments to simulate synth sequences 
   - sine, square, triangle synth with low pass, band pass and high pass filter. 
   - envelope generator for filter and amp
   - sample synth can replace waveforms 
 
-Step Sequencer
+- Step Sequencer
 	- 256 step sequences possible (16 pages of 16)
 	- Each step has 2 parameters
 	- Note + modulation
@@ -61,12 +60,10 @@ Step Sequencer
 	- Each sequence can be measured in beats or steps
 	- a 16 step sequence can be 16 beats long, or have 2 beat 	- steps and be 32 beats long
 	- Each step can trigger another sequence
-	- 
 	- Each sequence trigger has parameters
 	- Step 1 can also trigger a 
 
-
-Each Set of Sequences - The controller of time
+- Each Set of Sequences - The controller of time
 	- Can have up to 16 simultaneous sequences
 	- Master Sequence (default is first sequence made, but can be 	- changed)
 	- Retrigger for each sequence
@@ -74,7 +71,6 @@ Each Set of Sequences - The controller of time
 	- Loop and retriever with master sequence
 	- Loop with no retrigger for euclidean polyrhythms 
 	- Time modifiers for each sequence
-	- 
 	- Each sequence - The controller of melody
 	- Default note length
 	- Default scale lock (scale + mode)
@@ -84,7 +80,6 @@ Each Set of Sequences - The controller of time
 	- Type (Step Sequence, Euclidean)
 	- Methods
 	- Sequence Copy
-
 	- Random setting
 		- Type (regular random, 1st order perlin, 2nd order perlin etc 	- etc
 	- % chance of random trigger
@@ -92,8 +87,7 @@ Each Set of Sequences - The controller of time
 	- scale = multiplier of random influence - based on ableton 	- random midi patch
 	- Repeat type (Mirror repeat - random will repeat in reverse on every other measure, based on previous measure)
 
-
-Each Step - The controller of sound
+- Each Step - The controller of sound
 	- Step type 
 		- Note or sequence
 	- Note Type:
