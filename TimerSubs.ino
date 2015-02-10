@@ -1,9 +1,10 @@
 void timerInterrupt(){
 	// this timer runs once every millisecond 
-  Serial.println("interrupt start");
-  // this is used to measure the average run time between loops
+  noInterrupts();
+ 
+   // this is used to measure the average run time between loops
   runTimer = 0;
-  
+
   avgPeriod = ( avgPeriod + (int(micros()-lastRunTime)))/2;
   lastRunTime = micros();
 
@@ -31,8 +32,9 @@ void timerInterrupt(){
     }
   }
 
-  avgRuntime = (9*avgRuntime+int(runTimer))/10;  
-  Serial.println("interrupt end");
+  avgRuntime = (99*avgRuntime+int(runTimer))/100;  
+  
+  interrupts();
 
 }
 
@@ -48,70 +50,6 @@ void pixelRender(){
   }
 
   pixels.show();
-}
-
-
-
-void stepper() {
-  Serial.println("stepper start");
-  // every timerInterrupt, run the stepper subroutine
-  // to check if the stepTimer has elapsed, and if it
-  // has, it should trigger the notes, and then it 
-  // should reset the stepTimer.
-  // stepper also should check to see if there between 
-  // 1-2 ms until stepTimer elapses, so it should turn off
-  // the gate signal, so that at the next iteration,
-  // the gate signal can be turned back on.
-
-  /*
-  if (stepTimer > stepLength[activeStep]*(60*1000000/tempo)/4) {
-    // change the note
-    // increment activeStep
-    // turn the gate on if step is active
-    // reset stepTimer
-
-
-    // TO DO:
-    //    Design UI to set all step information for each step.
-    //    this needs to be put where stepActive and setLength are set;
-    programmedLength = 0;
-    lastActiveStep = 0;
-
-    for (int n = 0; n < 128; n++){
-      if (stepActive[n]){
-        programmedLength += stepLength[n];
-        lastActiveStep = n;
-      }
-    }
-
-    if ( lengthTracker >= sequenceLength ){
-      // if the sequence has ended, go back to the beginning
-      activeStep = 0;
-      lengthTracker = 0;
-    } else if ( lengthTracker == lastActiveStep+1  ) {
-      // if the sequence is repeating, go back to the beginning
-      activeStep = 0;
-    } else {
-      activeStep += 1;
-    }
-
-    if (stepActive[activeStep]){
-      synth.noteOn(0, stepPitch[activeStep], 64);   
-    }
-    stepTimer = 0;
-  }
-
-  if (stepTimer > (stepLength[activeStep]-2000)) {
-    // turn gate off if step is active
-    if (stepActive[activeStep]){
-      synth.noteOff(0, stepPitch[activeStep]);   
-    }
-  }
-*/
- 
-
-  Serial.println("stepper end");
-
 }
 
     // every beat,

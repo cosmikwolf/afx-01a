@@ -19,8 +19,9 @@ void startupSequence(){
   pixels.setBrightness(64);
 }
 void displayLoop() {
-  Serial.println("displayStart");
+  //Serial.println(F("displayStart"));
   display.clearDisplay();   // clears the screen and buffer
+
 
     display.drawTriangle( 120,0,
                           113,9,
@@ -30,57 +31,73 @@ void displayLoop() {
                           113,9,
                           127,9, WHITE);
   }
-Serial.println("displaydebug1");
+  Serial.println(F("displaydebug1"));
 
   display.setTextSize(1);
 
   display.setTextColor(WHITE);
-Serial.println("displaydebug2");
-
+ // Serial.println(F("displaydebug2"));
+  
   display.setCursor(0,0);
-  display.println(String(instrumentNames[sequence[selectedSequence].instrument+1]));
-  display.println("tempo:" + String(sequence[selectedSequence]._tempo));
-  display.println("as: " + String(sequence[selectedSequence].activeStep) + " ct: " + String(sequence[selectedSequence].clockTracker));
-  display.println("sequenceLength: " + String(sequence[selectedSequence]._sequenceLength));
-Serial.println("displaydebug3");
+ // display.println(F(sequence[selectedSequence].instrument));
 
-  display.println("lastActiveStep: " + String(lastActiveStep));
- /* 
+  display.println(F(instrumentNames[sequence[selectedSequence].instrument+1]));
+  
+
+  display.println(F("tempo:") + String(sequence[selectedSequence]._tempo));
+  display.println(F("as: ") + String(sequence[selectedSequence].activeStep) + F(" ct: ") + String(sequence[selectedSequence].clockTracker));
+  display.println(F("sequenceLength: ") + String(sequence[selectedSequence]._sequenceLength));
+display.println(String(FreeRam()));
+
+Serial.println(F("displaydebug3"));
+  display.println(F("lastActiveStep: ") + String(lastActiveStep));
+ 
   if (stepLength[selectedStep] == 1) {
-    display.println("Step: " + String(selectedStep) + " -  " + sequence[selectedSequence]._gateLength[selectedStep] + " beat");
+    display.println(F("Step: ") + String(selectedStep) + " -  " + sequence[selectedSequence]._gateLength[selectedStep] + F(" beat"));
   } else {
-    display.println("Step: " + String(selectedStep) + " " + sequence[selectedSequence]._gateLength[selectedStep] + " beats");
+    display.println(F("Step: ") + String(selectedStep) + " " + sequence[selectedSequence]._gateLength[selectedStep] + F(" beats"));
   }
-Serial.println("displaydebug4");
+Serial.println(F("displaydebug4"));
 
   if (stepActive[selectedStep] == true){
-    display.println("Pitch: " + String(midiNotes[sequence[selectedSequence]._stepPitch[selectedStep]]) + " Vel: " + String(sequence[selectedSequence]._stepVelocity[selectedStep]));
+    display.println(F("Pitch: ") + String(midiNotes[sequence[selectedSequence]._stepPitch[selectedStep]]) + F(" Vel: ") + String(sequence[selectedSequence]._stepVelocity[selectedStep]));
   } else {
-    display.println("Rest Step");
+    display.println(F("Rest Step"));
   }
-*/
-Serial.println("displaydebug5");
 
-  display.println("avgPeriod:" + String(avgPeriod));
-Serial.println("display debug 6");
+Serial.println(F("displaydebug5"));
+  display.println(F("avgPeriod:") + String(avgPeriod));
+Serial.println(F("display debug 6"));
 
-  display.println("avgLoopTime:" + String(avgLoopTime));
-  display.println("avgRuntime:" + String(avgRuntime));
+  display.println(F("avgLoopTime:") + String(avgLoopTime));
+  display.println(F("avgRuntime:") + String(avgRuntime));
   display.setTextSize(2);
   display.setCursor(100,0);
-Serial.println("display debug 7");
+Serial.println(F("display debug 7"));
 
   display.print(String(selectedSequence));
-Serial.println("display debug 8");
-  
-  noInterrupts();
+Serial.println(F("display debug 8"));
   display.display();
-Serial.println("display debug 9");
+Serial.println(F("display debug 9"));
 
-  interrupts();
-Serial.println("displayLoopEnd");
+Serial.println(F("displayLoopEnd"));
+
 }
+uint32_t FreeRam(){ // for Teensy 3.0
+    uint32_t stackTop;
+    uint32_t heapTop;
 
+    // current position of the stack.
+    stackTop = (uint32_t) &stackTop;
+
+    // current position of heap.
+    void* hTop = malloc(1);
+    heapTop = (uint32_t) hTop;
+    free(hTop);
+
+    // The difference is the free, available ram.
+    return stackTop - heapTop;
+}
 void ledLoop(){
   selectedStepColor = int(millis()*2)%256;
   pixels.setPixelColor(7-selectedStep, Wheel(selectedStepColor) );      

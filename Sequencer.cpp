@@ -117,7 +117,6 @@ void Sequencer::runSequence( ){
     // increment activeStep
     // turn the gate on if step is active
     // reset stepTimer
-      noInterrupts();
 
     if ( clockTracker >= _sequenceLength ){
       // if the sequence has ended, go back to the beginning
@@ -131,7 +130,6 @@ void Sequencer::runSequence( ){
     	testBoolean = false;
       activeStep++;
     }
-      interrupts();
 
     if (_gateType[activeStep] != 0){
       synth.noteOn(_channel, _stepPitch[activeStep], 64);   

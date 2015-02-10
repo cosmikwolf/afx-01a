@@ -7,10 +7,12 @@
 #include <Encoder.h>
 #include <TimerThree.h>
 #include <Adafruit_NeoPixel.h>
-#include <ClickButton.h>
+//#include <ClickButton.h>
+#include <Bounce.h>
 #include <Fluxamasynth.h>
 #include <PgmChange.h>
 #include <Sequencer.h>
+
 // Encoder Stuff
 #define ENCODER1LEFTPIN 18
 #define ENCODER1RIGHTPIN 19
@@ -31,12 +33,22 @@ long knob2InitValue = 0;
 #define BUTTONPIN4  17 // right momentary
 #define BUTTONPIN5  20 // left rotary
 
-ClickButton button0(BUTTONPIN0, LOW, CLICKBTN_PULLUP);
-ClickButton button1(BUTTONPIN1, LOW, CLICKBTN_PULLUP);
-ClickButton button2(BUTTONPIN2, LOW, CLICKBTN_PULLUP);
-ClickButton button3(BUTTONPIN3, LOW, CLICKBTN_PULLUP);
-ClickButton button4(BUTTONPIN4, LOW, CLICKBTN_PULLUP);
-ClickButton button5(BUTTONPIN5, LOW, CLICKBTN_PULLUP);
+Bounce buttons[6] = {
+  Bounce ( BUTTONPIN0,5 ), 
+  Bounce ( BUTTONPIN1,5 ), 
+  Bounce ( BUTTONPIN2,5 ), 
+  Bounce ( BUTTONPIN3,5 ), 
+  Bounce ( BUTTONPIN4,5 ), 
+  Bounce ( BUTTONPIN5,5 ), 
+};
+
+
+//ClickButton button0(BUTTONPIN0, LOW, CLICKBTN_PULLUP);
+//ClickButton button1(BUTTONPIN1, LOW, CLICKBTN_PULLUP);
+//ClickButton button2(BUTTONPIN2, LOW, CLICKBTN_PULLUP);
+//ClickButton button3(BUTTONPIN3, LOW, CLICKBTN_PULLUP);
+//ClickButton button4(BUTTONPIN4, LOW, CLICKBTN_PULLUP);
+//ClickButton button5(BUTTONPIN5, LOW, CLICKBTN_PULLUP);
 
 int clicks[6];
 bool buttonPreviousState[6] = {0,0,0,0,0,0};
@@ -121,6 +133,13 @@ Sequencer sequence[3];
 
 void setup(){
 
+    pinMode(BUTTONPIN0,INPUT_PULLUP);
+    pinMode(BUTTONPIN1,INPUT_PULLUP);
+    pinMode(BUTTONPIN2,INPUT_PULLUP);
+    pinMode(BUTTONPIN3,INPUT_PULLUP);
+      pinMode(BUTTONPIN4,INPUT_PULLUP);
+    pinMode(BUTTONPIN5,INPUT_PULLUP);
+
   sequence[0].initialize(0, 16, 4, tempo, 39, synth);
   sequence[1].initialize(1, 16, 4, tempo, 41, synth);
   sequence[2].initialize(2, 16, 4, tempo, 52, synth);
@@ -144,12 +163,14 @@ void setup(){
 }
 
 void loop(){
+ // selectedSequence = selectedSequence;
+
   avgLoopTime = (loopTimer + 99*avgLoopTime)/100;
   loopTimer = 0;
   Serial.println("Loop Start");
   buttonLoop();
   Serial.println("Button Loop Complete");
-  ledLoop();
+ // ledLoop();
   Serial.println("LED Loop Complete");
 //  if (displayTimer > 1000){
     displayLoop();
@@ -157,10 +178,10 @@ void loop(){
     displayTimer = 0;
 //  }
   if (pixelTimer > 10000) {
-      Serial.print("pixelTimerStart");
+    Serial.print("pixelTimerStart");
     pixelRender();
     pixelTimer = 0;
-      Serial.print("PixeltimerEnd");
+    Serial.print("PixeltimerEnd");
   }
   Serial.print("LoopEnd");
 

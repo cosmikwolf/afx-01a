@@ -1,19 +1,43 @@
 void buttonSetup() {
-  button0.debounceTime   = 0;
-  button1.debounceTime   = 0;
-  button2.debounceTime   = 0;
-  button3.debounceTime   = 0;
-  button4.debounceTime   = 0;
-  button5.debounceTime   = 0;
-  button0.multiclickTime = 10;  // Time limit for multi clicks
-  button1.multiclickTime = 10;  // Time limit for multi clicks
-  button2.multiclickTime = 10;  // Time limit for multi clicks
-  button3.multiclickTime = 10;  // Time limit for multi clicks
-  button4.multiclickTime = 10;  // Time limit for multi clicks
-  button5.multiclickTime = 10;  // Time limit for multi clicks
-  button0.longClickTime  = 500; // time until "held-down clicks" register
+//  button0.debounceTime   = 0;
+//  button1.debounceTime   = 0;
+//  button2.debounceTime   = 0;
+//  button3.debounceTime   = 0;
+//  button4.debounceTime   = 0;
+//  button5.debounceTime   = 0;
+//  button0.multiclickTime = 10;  // Time limit for multi clicks
+//  button1.multiclickTime = 10;  // Time limit for multi clicks
+//  button2.multiclickTime = 10;  // Time limit for multi clicks
+//  button3.multiclickTime = 10;  // Time limit for multi clicks
+//  button4.multiclickTime = 10;  // Time limit for multi clicks
+//  button5.multiclickTime = 10;  // Time limit for multi clicks
+//  button0.longClickTime  = 500; // time until "held-down clicks" register
 }
 
+void buttonLoop(){
+
+  for (int i=0; i <6; i++){
+    buttons[i].update();
+  }
+
+  if ( buttons[0].read() == LOW){
+ //   knob2Buffer = (knob2.read()-knob2InitValue) / -4;
+    selectedSequence = abs(knob2.read()/4) % 3;
+  }
+
+  if ( buttons[2].read() == LOW){
+    selectedStep -= 1;
+    selectedStep = selectedStep 8;
+
+
+  if (buttons[1].fallingEdge()){
+  }
+
+  if (buttons[1].risingEdge()){
+  }
+
+}
+/*
 void buttonLoop(){
   Serial.print("buttondebugstart");
 
@@ -45,14 +69,16 @@ void buttonLoop(){
   if(button0.depressed) {
 
     if (buttonPreviousState[0] == 1) {
+      //
+
       knob1.write(0);
-      knob2.write(0);
+      //knob2.write(0);
       previousTempo = tempo;
     }
 
     buttonPreviousState[0] = 0;
     tempo = knob1Buffer + previousTempo;
-    //selectedSequence = knob2Buffer % 3;
+    selectedSequence = knob2Buffer % 3;
 
   } else if(button1.depressed) {
     if (buttonPreviousState[1] == 1) {
@@ -98,7 +124,7 @@ void buttonLoop(){
     selectedSequence = (selectedSequence +1) %3;
     knob2.write(0);
   }; 
-  
+
   // end modifier button hold sections
 
   if (button0.clicks != 0) {
@@ -122,3 +148,4 @@ void buttonLoop(){
   Serial.print("buttondebugend");
 
 }
+*/
