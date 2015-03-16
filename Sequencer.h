@@ -9,8 +9,8 @@ class Sequencer
 	public:	
 		Sequencer();
 		
-		void initialize(uint8_t ch, uint8_t seqLength,uint8_t divider, uint16_t tempo, uint8_t instrumentSelection, Fluxamasynth synth1);
-		void setSequenceLength(uint8_t steps);
+		void initialize(uint8_t ch, uint8_t seqLength, uint8_t divider, uint16_t tempo, uint8_t instrumentSelection);
+		void setsequenceLength(uint8_t steps);
 		void setTempo(uint8_t bpm);
 		void setScale(uint8_t scaleIndex);		
 		void setStepPitch(uint8_t step, uint8_t pitch);
@@ -24,34 +24,38 @@ class Sequencer
 		void resetClockTracker();
 		void resetStepTimer();
 		void resetSequenceTimer();
-		void runSequence();
+		uint8_t * runSequence();
 		uint8_t getStepPitch(uint8_t step);
 		uint8_t clockTracker;		// keeps track of how long the sequence has been playing
 		uint8_t	activeStep;
-    unsigned long stepTimerMcs[128];		// an array of microsecond values for each step
+    unsigned long noteTimerMcs[128];		// an array of microsecond values for each step
     unsigned long _stepLengthMcs;
-		uint8_t _gateLength[128];     // the length of the gate in 1/16th note
-		uint8_t _gateType[128];       // type of gate. 0 for note deactivated, 1 for normal gate, 2 for dashed gate
+		uint8_t gateLength[128];     // the length of the gate in 1/16th note
+		uint8_t gateType[128];       // type of gate. 0 for note deactivated, 1 for normal gate, 2 for dashed gate
 		uint8_t instrument = 39;
-		Fluxamasynth synth;
 		bool testBoolean;
 		void calculateLastActiveSteps();
 		void calculateStepTimers();
 		void calculateStepLengthMcs();
-		uint8_t _sequenceLength;  		// sequence length in 1/16th notes
-		uint16_t _tempo;
-		uint8_t _channel;
-		uint8_t _stepPitch[128];      // the pitch the step will play
-		uint8_t _stepVelocity[128];   // the velocity of the step
-		uint8_t	_stepGlide[128];			// 0-128 value that defines the fraction of the gate length that the note glides
-		uint8_t	_stepDivider;					// fraction of a beat that is a step.
-		uint8_t _programmedLength;
-    uint8_t _lastActiveStep;
-
-		elapsedMicros _stepTimer;			// timer for step to step
-		elapsedMicros _sequenceTimer; // timer for sequence interval to sequence interval
-
+		uint8_t sequenceLength;  		// sequence length in 1/16th notes
+		uint16_t tempo;
+		uint8_t channel;
+		uint8_t stepPitch[128];      // the pitch the step will play
+		uint8_t stepVelocity[128];   // the velocity of the step
+		uint8_t	stepGlide[128];			// 0-128 value that defines the fraction of the gate length that the note glides
+		uint8_t	stepDivider;					// fraction of a beat that is a step.
+		uint8_t programmedLength;
+    uint8_t lastActiveStep;
+		boolean notePlaying[128];				// boolean which tells if the note is playing or not
+    elapsedMicros	noteTimer[128];  // timer for each note, set to 0 when note is activated, times when noteOff event arrives.
+		elapsedMicros stepTimer;			// timer for step to step
+		elapsedMicros sequenceTimer; // timer for sequence interval to sequence interval
+		elapsedMicros tempoTimer;		// internal tempo time keeper	for sync purposes
+		uint32_t 			beatCounter;	// internal beat counter for sync purposes
+		uint8_t noteData[132];	
+		int positive_modulo(int i, int n);
 	private:
+		//int a[4] = {0,0,0,0};
 
 };
 
