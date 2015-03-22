@@ -1,16 +1,4 @@
 
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-
-#include "AudioSampleSnare.h"        // http://www.freesound.org/people/KEVOY/sounds/82583/
-#include "AudioSampleTomtom.h"       // http://www.freesound.org/people/zgump/sounds/86334/
-#include "AudioSampleHihat.h"        // http://www.freesound.org/people/mhc/sounds/102790/
-#include "AudioSampleKick.h"         // http://www.freesound.org/people/DWSD/sounds/171104/
-//#include "AudioSampleGong.h"         // http://www.freesound.org/people/juskiddink/sounds/86773/
-//#include "AudioSampleCashregister.h" // http://www.freesound.org/people/kiddpark/sounds/201159/
-
   AudioSynthWaveform       waveform1_1;      //xy=243,255
   AudioSynthWaveform       waveform2_1;      //xy=225,418
   AudioSynthWaveformDc     staticSignal;
@@ -92,7 +80,6 @@ void audioSetup(){
   mixerRight.gain(1,0.5);
   mixerRight.gain(2,0.5);
 
-
   staticSignal.amplitude(1);
   waveform1_1.begin(0.2, 220.1, WAVEFORM_SQUARE); 
   waveform2_1.begin(0.2, 440, WAVEFORM_SINE); 
@@ -133,7 +120,6 @@ void audioSetup(){
   filter1_2.frequency(500);
   filter1_2.resonance(4);
   filter1_2.octaveControl(3);
-
 }
 
 void audioLoop(){
@@ -204,5 +190,6 @@ void noteOff(uint8_t instrument){
     filterEnvelope_2.noteOff();
   }
 }
+
 
 
