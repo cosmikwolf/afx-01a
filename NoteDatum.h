@@ -10,6 +10,10 @@
 	  uint8_t   channel;            // midi channel to send the message
 	  uint8_t   noteOnStep;         // step number that originated the noteOn message.
 	  uint8_t   noteOffStep;        // step number that originated the noteOff message.
+		unsigned long	triggerTime;
+		unsigned long	offset;
+		unsigned long	sequenceTime;
+
 	} NoteDatum ;
 
 #endif

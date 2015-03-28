@@ -1,6 +1,13 @@
 # afx-01
 AFX-01 Sequencer
 
+UPDATE
+----
+looks like most of this is out of date already :D 
+need to update readme.md with current feature list.
+
+-----
+-----
 The beginnings of an open source hardware sequencer project based on the Teensy 3.1 and an Atmel SAM2695 sound chip.
 
 - Hardware (subject to change)

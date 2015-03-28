@@ -1,7 +1,8 @@
-#include <SPI.h>
+  #include <SPI.h>
 #include <SD.h>
-#include <Audio.h>
-#include <Wire.h>
+//#include <Audio.h>
+#include <i2c_t3.h>
+//#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_NeoPixel.h>
@@ -28,12 +29,9 @@
 #define GLOBAL_SAVE   92
 #define GLOBAL_LOAD   93
 #define GLOBAL_FILE   94
+#define TEMPO_SET 95
 
-
-
-
-
-
+uint8_t menuSelection = 127;
 // Neopixel Stuff
 #define NEOPIXELPIN       21
 #define NUMPIXELS         16
@@ -49,7 +47,32 @@ float midiFreq[128] = { 8.17, 8.66, 9.17, 9.72, 10.30, 10.91, 11.56, 12.24, 12.9
 
 // Sequencer stuff - clean this shit up!
 // Things that are definitely needed:
-const char* midiNotes[] = { "C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0","C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1","C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2","C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3","C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4","C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5","C6","C#6","D6","D#6","E6","F6","F#6","G6","G#6","A6","A#6","B6","C7","C#7","D7","D#7","E7","F7","F#7","G7","G#7","A7","A#7","B7","C8","C#8","D8","D#8","E8","F8","F#8","G8","G#8","A8","A#8","B8","C9","C#9","D9","D#9","E9","F9","F#9","G9","G#9","A9","A#9","B9","C10","C#10","D10","D#10","E10","F10","F#10","G10" };
+const char* midiNotes[] = {
+ "C-2","C#-2","D-2","D#-2","E-2","F-2","F#-2","G-2","G#-2","A-2","A#-2","B-2",
+ "C-1","C#-1","D-1","D#-1","E-1","F-1","F#-1","G-1","G#-1","A-1","A#-1","B-1",
+ "C0","C#0","D0","D#0","E0","F0","F#0","G0","G#0","A0","A#0","B0",
+ "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
+ "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
+ "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
+ "C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
+ "C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5",
+ "C6","C#6","D6","D#6","E6","F6","F#6","G6","G#6","A6","A#6","B6",
+ "C7","C#7","D7","D#7","E7","F7","F#7","G7","G#7","A7","A#7","B7",
+ "C8","C#8","D8","D#8","E8","F8","F#8","G8" };
+
+uint8_t aminor[] = {
+0, 2, 4, 5, 7, 9, 11,
+12, 14, 16, 17, 19, 21, 23,
+24, 26, 28, 29, 31, 33, 35,
+36, 38, 40, 41, 43, 45, 47,
+48, 50, 52, 53, 55, 57, 59,
+60, 62, 64, 65, 67, 69, 71,
+72, 74, 76, 77, 79, 81, 83,
+84, 86, 88, 89, 91, 93, 95,
+96, 98, 100, 101, 103, 105, 107
+108, 110, 112, 113, 115, 117, 119,
+120, 122, 124, 125, 127 };
+
 int8_t  stepMode; 
 int8_t  settingMode;
 boolean playing = false;
@@ -57,12 +80,13 @@ boolean playing = false;
 // things of which I am unsure
 IntervalTimer masterClock;
 IntervalTimer midiClockSync;
+IntervalTimer uiLoop;
 //const char* instrumentNames[] = {"None","(Grand) Piano 1","(Bright) Piano 2","(El, Grd) Piano 3","Honky-tonk Piano","El. Piano 1","El. Piano 2","Harpsichord","Clavi","Celesta","Glockenspiel","Music Box","Vibraphone","Marimba","Xylophone","Tubular Bells","Santur","Drawbar Organ","Percussive Organ","Rock Organ","Church Organ","Reed Organ","Accordion (French)","Harmonica","Tango Accordion","Accoustic Guitar (nylon)","Accoustic Guitar (steel)","El. Guitar (jazz)","El. Guitar (clean)","El. Guitar (muted)","Overdriven Guitar","Distortion Guitar","Guitar Harmonics","Acoustic Bass","Finger Bass","Picked Bass","Fretless Bass","Slap Bass 1","Slap Bass 2","Synth Bass 1","Synth Bass 2","Violin","Viola","Cello","Contrabass","Tremolo Strings","Pizzicato Strings","Orchestral Harp","Timpani","String Ensemble 1","String Ensemble 2","Synth Strings 1","Synth Strings 2","Choir Aahs","Voice Oohs","Synth Voice","Orchestra Hit","Trumpet","Trombone","Tuba","Muted Trumpet","French Horn","Brass Section","Synth Brass 1","Synth Brass 2","Soprano Sax","Alto Sax","Tenor Sax","Baritone Sax","Oboe","English Horn","Bassoon","Clarinet","Piccolo","Flute","Recorder","Pan Flute","Blown Bottle","Shakuhachi","Whistle","Ocarina","Lead 1 (square)","Lead 2 (sawtooth)","Lead 3 (calliope)","Lead 4 (chiff)","Lead 5 (charang)","Lead 6 (voice)","Lead 7 (fifths)","Lead 8 (bass+lead)","Pad 1 (fantasia)","Pad 2 (warm)","Pad 3 (polysynth)","Pad 4 (choir)","Pad 5 (bowed)","Pad 6 (metallic)","Pad 7 (halo)","Pad 8 (sweep)","FX 1 (rain)","FX 2 (soundtrack)","FX 3 (crystal)","FX4 (atmosphere)","FX 5 (brightness)","FX 6 (goblins)","FX 7 (echoes)","FX 8 (sci-fi)","Sitar","Banjo","Shamisen","Koto","Kalimba","Bagpipe","Fiddle","Shanai","Tinkle Bell","Agogo","Steel Drums","Woodblock","Taiko Drum","Melodic Tom","Synth Drum","Reverse Cymbal","Guitar Fret Noise","Breath Noise","Seashore","Bird Tweet","Teleph. Ring","Helicopter","Applause","Gunshot"};
 uint8_t selectedStep = 0;
 uint8_t multiSelect[16];
 //uint8_t selectedStepColor = 0;
 uint8_t numSteps = 16;
-uint16_t tempo = 120;
+float tempo = 153.0;
 //uint16_t previousTempo;
 //uint16_t stepsPerBeat = 2;
 //uint16_t previousStepsPerBeat = 2;
@@ -82,31 +106,29 @@ elapsedMicros internalClockTimer;
 elapsedMicros pixelTimer;
 //uint8_t currentStepInitPitch = 0;
 //uint8_t stepLengthBuffer;
-uint32_t timerInterruptInterval = 2000 ;
-uint32_t clockSyncInterruptInterval = 200.0;
+uint32_t timerInterruptInterval = 1000;
+uint32_t clockSyncInterruptInterval = 2000.0;
+uint32_t uiLoopInterruptInterval = 3000.0;
 uint8_t selectedSequence = 0;
 
 unsigned long lastRunTime = 0;
-
-
-
-
 
 int iter = 1;
 int avgPeriod = 0;
 int avgRuntime = 0;
 bool tempoBool = false;
-elapsedMicros loopTimer = 0;
-int avgLoopTime = 0;
+unsigned long ledLoopTime = 0;
+unsigned long displayLoopTime = 0;
+unsigned long buttonLoopTime = 0;
 elapsedMicros runTimer = 0;
 String activeSection;
 // Lets Begin!
 
-uint8_t sequenceCount = 2;
+uint8_t sequenceCount = 8;
 
 
-Sequencer sequence[2];
-NoteDatum noteData[2];
+Sequencer sequence[8];
+NoteDatum noteData[8];
 
 void setup(){
   Serial.begin(57600);
@@ -138,24 +160,26 @@ void setup(){
   Serial.println("Begin Sequence Object Initialization");
 
 //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
-  sequence[0].initialize(1, 16, 4,  tempo);
-  sequence[1].initialize(2,  32, 4, tempo);
-  //sequence[2].initialize(3, 12, 8,  2, tempo);
+  sequence[0].initialize(1, 16, 4, tempo);
+  sequence[1].initialize(2, 16, 4, tempo);
+  sequence[2].initialize(3, 16, 4, tempo);
+  sequence[3].initialize(4, 16, 4, tempo);
+  sequence[4].initialize(5, 16, 4, tempo);
+  sequence[5].initialize(6, 16, 4, tempo);
+  sequence[6].initialize(7, 16, 4, tempo);
+  sequence[7].initialize(8, 16, 4, tempo);
 
 
   Serial.println("Sequence Object Initialization Complete");
 
- // Serial.println("sizeof midiNotes:" + String(sizeof(midiNotes)));
- // Serial.println("sizeof pixels:" + String(sizeof(pixels)));
- // Serial.println("sizeof display:" + String(sizeof(display)));
- // Serial.println("sizeeof stepData[0]:" + String(sizeof(sequence[0].stepData[0])));
- // Serial.println("sizeof stepData:" + String(sizeof(sequence[0].stepData)));
- // Serial.println("sizeof stepData.lengthMcs:" + String(sizeof(sequence[0].stepData[0].lengthMcs)));
- // Serial.println("sizeof stepData.stepTimer:" + String(sizeof(sequence[0].stepData[0].stepTimer)));
- // Serial.println("sizeof sequence:" + String(sizeof(sequence[0])));
- // Serial.println("sizeof testTimer1:" + String(sizeof(testTimer1)));
-
- //Serial.print("totalSizeofArrayVals: " + String(sizeof(sequence[0].stepPitch) + sizeof(sequence[0].stepVelocity) + sizeof(sequence[0].stepGlide) + sizeof(sequence[0].noteTimerMcs) + sizeof(sequence[0].noteStatus) + sizeof(sequence[0].noteTimer) + sizeof(sequence[0].noteData) + sizeof(sequence[0].gateLength) + sizeof(sequence[0].gateType) ));
+  Serial.println("sizeof midiNotes:" + String(sizeof(midiNotes)));
+  Serial.println("sizeof pixels:" + String(sizeof(pixels)));
+  Serial.println("sizeof display:" + String(sizeof(display)));
+  Serial.println("sizeeof stepData[0]:" + String(sizeof(sequence[0].stepData[0])));
+  Serial.println("sizeof stepData:" + String(sizeof(sequence[0].stepData)));
+  Serial.println("sizeof stepData.lengthMcs:" + String(sizeof(sequence[0].stepData[0].lengthMcs)));
+  Serial.println("sizeof stepData.stepTimer:" + String(sizeof(sequence[0].stepData[0].stepTimer)));
+  Serial.println("sizeof sequence:" + String(sizeof(sequence[0])));
   
   Serial.println("Beginning Master Clock");
 
@@ -164,36 +188,53 @@ void setup(){
   Serial.println("Setup Complete");
   midiClockSync.begin(midiClockSyncFunc, clockSyncInterruptInterval);
 
+  uiLoop.begin(uiLoopFunc, uiLoopInterruptInterval);
   interrupts();
 
  }
 
+uint8_t uiLoopFuncMultiplexer = 0;
+void uiLoopFunc(){
+
+  encoderLoop(); // encoder loop is quick, so it will run each time.
+  uiLoopFuncMultiplexer = (uiLoopFuncMultiplexer+1) % 3;
+
+  switch (uiLoopFuncMultiplexer) {
+    case 0:
+      buttonLoop();
+      break;
+
+    case 1:
+      ledLoop();
+      break;
+
+    case 2:
+      displayLoop();
+      break;
+  }
+//  unsigned long loopTimer = micros();
+//
+//  buttonLoopTime = ((micros() - loopTimer) + 9*buttonLoopTime)/10;
+//  loopTimer = micros();
+//
+//  ledLoopTime = ((micros() - loopTimer) + 9*ledLoopTime)/10;
+//  loopTimer = micros();
+//
+//  // audioLoop();
+//
+//  displayLoopTime = ((micros() - loopTimer) + 9*displayLoopTime)/10;
+//
+//  if (millis() % 100 == 0){
+//    Serial.println("buttonLoopTime: " + String(buttonLoopTime) +
+//      "\tledLoopTime: " + String(ledLoopTime) +
+//     "\tdisplayLoopTime: " + String(displayLoopTime) );
+//  }
+}
+
+
+
+
 void loop(){
-    noInterrupts();
-  if (micros() % 10000 == 0){
-   // Serial.println("Millis() " +  String(millis()));
-  }
-
-  avgLoopTime = (loopTimer + 99*avgLoopTime)/100;
-  loopTimer = 0;
-  // Serial.println("Loop Start");
-  buttonLoop();
-  //Serial.println("Button Loop Complete");
-  ledLoop();
-  // Serial.println("LED Loop Complete");
-  displayLoop();
-  // Serial.println("Display Loop Complete");
-  if (pixelTimer > 10000) {
-   // Serial.print("pixelTimerStart");
-    pixelRender();
-    pixelTimer = 0;
-    //Serial.print("PixeltimerEnd");
-  }
-  //   Serial.print("AudioLoop Start");
-
-  // audioLoop();
-  // Serial.print("LoopEnd");
-    interrupts();
 }
 
 

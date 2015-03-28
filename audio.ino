@@ -1,4 +1,4 @@
-
+/*
   AudioSynthWaveform       waveform1_1;      //xy=243,255
   AudioSynthWaveform       waveform2_1;      //xy=225,418
   AudioSynthWaveformDc     staticSignal;
@@ -193,3 +193,4 @@ void noteOff(uint8_t instrument){
 
 
 
+*/

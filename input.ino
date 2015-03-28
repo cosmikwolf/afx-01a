@@ -111,13 +111,106 @@ inline int positive_modulo(int i, int n) {
     return (i % n + n) % n;
 }
 
+unsigned long encoderLoopTime;
+unsigned long smallButtonLoopTime;
+unsigned long encoderButtonTime;
+unsigned long matrixButtonTime;
+
 void buttonLoop(){
-
+  noInterrupts();
+  unsigned long loopTimer = micros();
   encoderLoop();
+    encoderLoopTime = ((micros() - loopTimer) + 9*encoderLoopTime)/10;
+    loopTimer = micros();
   smallButtonLoop();
+    smallButtonLoopTime = ((micros() - loopTimer) + 9*smallButtonLoopTime)/10;
+    loopTimer = micros();
   encoderButtonLoop();
+    encoderButtonTime = ((micros() - loopTimer) + 9*encoderButtonTime)/10;
+    loopTimer = micros();
   matrixButtonLoop();
+    matrixButtonTime = ((micros() - loopTimer) + 9*matrixButtonTime)/10;
+    loopTimer = micros();
+ if (millis() % 100 == 0){
+   Serial.println("encoderLoopTime: " + String(encoderLoopTime) +
+     "\tsmallButtonLoopTime: " + String(smallButtonLoopTime) +
+    "\tencoderButtonTime: " + String(encoderButtonTime) +
+    "\tmatrixButtonTime: " + String(matrixButtonTime) );
+ }
+  interrupts();
+}
 
+void encoderLoop(){
+  knob1Buffer = knob1.read()/-4;
+  knob2Buffer = knob2.read()/-4;
+
+  if (knob1Buffer != knob1previousValue) {
+    // knob 1 has changed!
+
+    knob1previousValue = knob1Buffer;
+   // filter1.frequency(knob1Buffer);
+    selectedSequence = positive_modulo(knob1Buffer, sequenceCount);
+    Serial.println("setting selectedSequence: " + String(selectedSequence));
+
+  }
+
+
+  if (knob2Buffer != knob2previousValue) {
+    // knob 1 has changed!
+    knob2previousValue = knob2Buffer;
+
+    switch (settingMode) {
+      case 0: // step mode
+        switch (stepMode) {
+          case 0:
+          // just change the note
+            if (knob2Buffer + sequence[selectedSequence].getStepPitch(selectedStep) < 0){
+              // you can turn off a note by turning the value to 0
+              // turn off a note by setting gate type and pitch to 0 
+              sequence[selectedSequence].stepData[selectedStep].gateType = 0;
+              sequence[selectedSequence].setStepPitch(selectedStep, 0);
+            } else {
+              if(sequence[selectedSequence].stepData[selectedStep].gateType == 0){
+                // if a note is not active, turn it on.
+                sequence[selectedSequence].stepData[selectedStep].gateType = 1; 
+              } 
+              // and finally set the new step value!
+              sequence[selectedSequence].setStepPitch(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 127));
+            }
+            break;
+
+          case 1:
+          // change the gate type
+            sequence[selectedSequence].setGateLength(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 127) );
+
+            break;
+
+          case 2:  
+          // change length of gate
+            sequence[selectedSequence].setGateType(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 3) );
+            break;
+
+          case 3:
+            break;
+
+          case 4:
+
+            break;
+        }
+        break;
+
+      case SEQUENCE_SPED: // speed setting
+        switch(menuSelection){
+          case 0:
+            sequence[selectedSequence].stepCount =  positive_modulo(stepModeBuffer + knob2Buffer, 63)+1;
+            break;
+          case 1: 
+            sequence[selectedSequence].beatCount =  positive_modulo(stepModeBuffer + knob2Buffer, 127) + 1;
+            break;
+        }
+        break;
+      }
+    }
 }
 
 void matrixButtonLoop(){
@@ -125,6 +218,7 @@ void matrixButtonLoop(){
   for (int i=0; i < numSteps; i++){
 
     buttons[i].update();
+    
     if (buttons[i].fell()){
       switch (settingMode) {
         case 0:
@@ -153,14 +247,25 @@ void menuItemButtonHandler(uint8_t settingMode, uint8_t buttonNum){
           extClock = !extClock;
           break;
       }
-    break;
-
+      break;
+    case SEQUENCE_SPED:
+      switch(buttonNum){
+        case 0:
+          menuSelection = 0;
+          stepModeBuffer = sequence[selectedSequence].stepCount;
+          break;
+        case 4:
+          menuSelection = 1;
+          stepModeBuffer = sequence[selectedSequence].beatCount;
+          break;
+      }
+      break;
   }
 };
 
 
 void sequencerMenuButtonHandler(uint8_t buttonId){
-
+  menuSelection = 127;
   switch (buttonId) {
     case 0:
       settingMode = SEQUENCE_NAME;
@@ -254,64 +359,7 @@ void stepModeButtonHandler(uint8_t i){
 }
 
 
-void encoderLoop(){
-  knob1Buffer = knob1.read()/-4;
-  knob2Buffer = knob2.read()/-4;
 
-  if (knob1Buffer != knob1previousValue) {
-    // knob 1 has changed!
-    knob1previousValue = knob1Buffer;
-   // filter1.frequency(knob1Buffer);
-    selectedSequence = positive_modulo(knob1Buffer, sequenceCount);
-    Serial.println("setting selectedSequence: " + String(selectedSequence));
-
-  }
-
-  if (knob2Buffer != knob2previousValue) {
-    // knob 1 has changed!
-    knob2previousValue = knob2Buffer;
-
-    switch (stepMode) {
-      case 0:
-      // just change the note
-        if (knob2Buffer + sequence[selectedSequence].getStepPitch(selectedStep) < 0){
-          // you can turn off a note by turning the value to 0
-          // turn off a note by setting gate type and pitch to 0 
-          sequence[selectedSequence].stepData[selectedStep].gateType = 0;
-          sequence[selectedSequence].setStepPitch(selectedStep, 0);
-        } else {
-          if(sequence[selectedSequence].stepData[selectedStep].gateType == 0){
-            // if a note is not active, turn it on.
-            sequence[selectedSequence].stepData[selectedStep].gateType = 1; 
-          } 
-          // and finally set the new step value!
-          sequence[selectedSequence].setStepPitch(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 127));
-        }
-        break;
-
-      case 1:
-      // change the gate type
-        sequence[selectedSequence].setGateLength(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 127) );
-
-        break;
-
-      case 2:  
-      // change length of gate
-        sequence[selectedSequence].setGateType(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 3) );
-        break;
-
-      case 3:
-        break;
-
-      case 4:
-
-        break;
-    }
-
-
-  }
-
-}
 
 void smallButtonLoop(){
   for (int i=0; i <7; i++){
@@ -329,6 +377,7 @@ void smallButtonLoop(){
 
         case 2:
           stepMode = 4;
+          settingMode = TEMPO_SET;
           break;
 
         case 3:
