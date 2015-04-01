@@ -129,14 +129,15 @@ void buttonLoop(){
     encoderButtonTime = ((micros() - loopTimer) + 9*encoderButtonTime)/10;
     loopTimer = micros();
   matrixButtonLoop();
-    matrixButtonTime = ((micros() - loopTimer) + 9*matrixButtonTime)/10;
+    matrixButtonTime = ((micros() - loopTimer) + 9*matrixButtonTime)/ 0;
     loopTimer = micros();
- if (millis() % 100 == 0){
+/* if (millis() % 100 == 0){
    Serial.println("encoderLoopTime: " + String(encoderLoopTime) +
      "\tsmallButtonLoopTime: " + String(smallButtonLoopTime) +
     "\tencoderButtonTime: " + String(encoderButtonTime) +
     "\tmatrixButtonTime: " + String(matrixButtonTime) );
  }
+ */
   interrupts();
 }
 

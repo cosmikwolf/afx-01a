@@ -1,6 +1,5 @@
-#ifndef Sequencer_h
-#define Sequencer_h
-
+#ifndef _Sequencer_h_
+#define _Sequencer_h_
 
 #include <NoteDatum.h>
 
@@ -19,7 +18,7 @@ class Sequencer
 		void runSequence(NoteDatum *noteData);
 		void calculateStepTimers();
 		void beatPulse(uint32_t beatLength);
-		void clockStart();
+		void clockStart(elapsedMicros startTime);
 		int  positive_modulo(int i, int n);
 		uint8_t  getStepPitch(uint8_t step);
 		boolean  monophonic;

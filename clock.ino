@@ -6,109 +6,29 @@ float avgBpm;
 boolean tempoBlip = false;
 boolean firstRun = false;
 elapsedMicros blipTimer = 0;
-uint32_t beatLength = 60000000/tempo;
-unsigned long avgJitter;
+unsigned long beatLength = 60000000/tempo;
+unsigned long avgDelta;
+elapsedMicros testTimer;
+elapsedMicros pulseTimer;
+unsigned long lastPulseLength;
+unsigned long avgPulseLength;
+unsigned long avgPulseJitter;
+unsigned long pulseLength;
+unsigned long lastBeatLength;
 
-void midiClockSyncFunc(){
-  noInterrupts();
-  int type, note, velocity, channel, d1, d2;
-  if (MIDI.read()) {                    // Is there a MIDI message incoming ?
-    byte type = MIDI.getType();
-    switch (type) {
-      case NoteOn:
-        note = MIDI.getData1();
-        velocity = MIDI.getData2();
-        channel = MIDI.getChannel();
-        if (velocity > 0) {
-          Serial.println(String("Note On:  ch=") + channel + ", note=" + note + ", velocity=" + velocity);
-        } else {
-          Serial.println(String("Note Off: ch=") + channel + ", note=" + note);
-        }
-        break;  
-      case NoteOff:
-        note = MIDI.getData1();
-        velocity = MIDI.getData2();
-        channel = MIDI.getChannel();
-        Serial.println(String("Note Off: ch=") + channel + ", note=" + note + ", velocity=" + velocity);
-        break;
-    }
+unsigned long lastMicros;
+unsigned long avgInterval;
+unsigned long lastAvgInterval;
+unsigned long intervalJitter;
+unsigned long avgIntervalJitter;
+unsigned long lastTimer;
+unsigned long timerAvg;
+elapsedMicros printTimer;
 
-    if (extClock == true) {
-      switch (type) {
-        case 250: // midi start
-        case 251: // midi continue
-          playing = 1;
-          masterPulseCount = 0;
-          masterTempoTimer = 0;
-          tempoBlip = !tempoBlip;
-          blipTimer = 0;
-          firstRun = true;
-          for (int i=0; i< sequenceCount; i++){
-            sequence[i].clockStart();  
-            sequence[i].beatPulse(beatLength);  
-          }
-          Serial.println("Midi Start / Continue: " + String(type) + "micros: " + String(micros()));
-          break;
+void changeTempo(uint16_t newTempo){
+  tempo = newTempo;
+  beatLength = 60000000/tempo;
 
-        case 252:
-          playing = 0;
-          break;
-      //  case 242: // midi song position pointer
-      //    d1 = MIDI.getData1();
-      //    d2 = MIDI.getData2();
-      //    Serial.println("MIDI song position pointer: " + String(d1) + " " + String(d2));
-      //    if (d1 == 0 && d2 == 0 && playing == 0){ 
-      //      for (int i; i < sequenceCount; i++) {
-      //        sequence[i].clockStart();  
-      //        sequence[i].activeStep = 0;
-      //      }
-      //      Serial.println("resetting position to 0");
-      //    }
-      //    break;
-        case 248: // midi clock
-         // Serial.println("clock received: " + String(micros()));
-          bpm = 60.0/(24.0*(float(masterTempoTimer)/float(masterPulseCount))/1000000.0);
-          avgBpm = (9*avgBpm + bpm)/10;
-          //Serial.println(" bpm:" + String(bpm)  + "\tavg: " + String(avgBpm) );
-          //20bpm = 124825/1
-          //120bpm = 20831/1
-
-          // 1 beat = 24 puleses
-          // = 24* avg pulse = 24*(masterTempoTimer/(masterPulseCount+1))
-          // = 24*(20831/1) = 499944 microseconds per beat /1000000 = .4999 seconds per beat 
-          if (firstRun){
-            firstRun = false;
-          } else {
-            masterPulseCount = positive_modulo(masterPulseCount + 1, 24);
-          //  Serial.println("Midi Clock - mpc: " + String(masterPulseCount) + "\ttempotimer: " + String(masterTempoTimer) );
-
-            if (masterPulseCount ==  0){
-              //this gets triggered every quarter note
-              // just for testing latency
-          //   MIDI.sendNoteOn(65,65,3);
-          //   MIDI.sendNoteOff(65,65,3);
-              beatLength = masterTempoTimer;
-              masterTempoTimer = 0;
-              tempoBlip = !tempoBlip;
-              blipTimer = 0;
-              for (int i=0; i< sequenceCount; i++){
-                sequence[i].beatPulse(beatLength);  
-              }
-            }
-          }
-          //masterClockFunc();
-
-          break;
-        default:
-          d1 = MIDI.getData1();
-          d2 = MIDI.getData2();
-         // bpm = 60/(((int(masterTempoTimer)/(masterPulseCount+10))*24)/1000000);
-          Serial.println(String("Message, type=") + type + ", data = " + d1 + " " + d2 + " mtt:" + String(masterTempoTimer) + "\t mpc: " + String(masterPulseCount) );
-       }
-    }
-    
-  }
-  interrupts();
 }
 
 void masterClockFunc(){
@@ -117,25 +37,51 @@ void masterClockFunc(){
 
   noInterrupts();
 
+  elapsedMicros loopTimer = 0;
+  avgInterval =((micros() - lastMicros) + 9* avgInterval) / 10;
+  timerAvg = (lastTimer + 9*timerAvg) /10;
+  lastMicros = micros();
+  
+  intervalJitter = (abs(int(avgInterval) - int(lastAvgInterval)));
+  avgIntervalJitter = (intervalJitter * 9 + avgIntervalJitter) / 10;
+  lastAvgInterval = avgInterval;
+
+// if (printTimer > 200000) {
+//   Serial.println("avgInterval: " + String(avgInterval) + "\ttimerAvg: " + String(timerAvg) + "\tavgIntervalJitter: " + String(avgIntervalJitter));
+//   printTimer = 0;
+// }
+
   iter = iter + 1;
 
  //  Serial.println("timer loop 2");
   if(playing){
-    if (wasPlaying == false){
-      // if playing has just re-started, the master tempo timer and the master beat count must be reset
-      MIDI.send(Start, 0, 0, 1);
-      MIDI.sendSongPosition(0);
-      masterTempoTimer = 0;
-      masterPulseCount = 0;
-
-      internalClockTimer = 0;
-      for (int i=0; i< sequenceCount; i++){
-        sequence[i].clockStart();
-        sequence[i].beatPulse(beatLength);  
-      }
-    }
 
     if( extClock == false ){ 
+      // int clock
+      if (wasPlaying == false){
+        Serial.println("TestTimer: " + String(testTimer));
+        // if playing has just re-started, the master tempo timer and the master beat count must be reset
+        MIDI.send(Start, 0, 0, 1);
+        MIDI.sendSongPosition(0);
+        masterTempoTimer = 0;
+        masterPulseCount = 0;
+        internalClockTimer = 0;
+        startTime = 0;
+
+        for (int i=0; i< sequenceCount; i++){
+          sequence[i].clockStart(startTime);
+          sequence[i].beatPulse(beatLength);
+          sequence[i].runSequence(&noteData[i]);
+        }
+
+      } else {
+
+        for (int i=0; i< sequenceCount; i++){
+         sequence[i].runSequence(&noteData[i]);
+        }
+
+      }
+
       if (internalClockTimer > 60000000/tempo){
         for (int i=0; i< sequenceCount; i++){
           sequence[i].beatPulse(beatLength);  
@@ -143,29 +89,12 @@ void masterClockFunc(){
         tempoBlip = !tempoBlip;
         internalClockTimer = 0;
       }
+    } else {
+      // ext clock sync
+      for (int i=0; i< sequenceCount; i++){
+        sequence[i].runSequence(&noteData[i]);
+      }
     }
-
-    wasPlaying = true;
-    // get all note events
-    //Serial.println("about to run sequences s0");
-  for (int i=0; i< sequenceCount; i++){
-     sequence[i].runSequence(&noteData[i]);
-  }
-    //Serial.println("about to run sequences s1");
-  // uint8_t *s2 = sequence[2].runSequence();
-  // uint8_t *s3 = sequence[3].runSequence();
-  // uint8_t *s4 = sequence[4].runSequence();
-  // uint8_t *s5 = sequence[5].runSequence();
-  // uint8_t *s6 = sequence[6].runSequence();
-  // uint8_t *s7 = sequence[7].runSequence();
-  // uint8_t *s8 = sequence[8].runSequence();
-  // uint8_t *s9 = sequence[9].runSequence();
-  // uint8_t *s10 = sequence[10].runSequence();
-  // uint8_t *s11 = sequence[11].runSequence();
-  // uint8_t *s12 = sequence[12].runSequence();
-  // uint8_t *s13 = sequence[13].runSequence();
-  // uint8_t *s14 = sequence[14].runSequence();
-  // uint8_t *s15 = sequence[15].runSequence();
 
 
   for (int i=0; i< sequenceCount; i++){
@@ -176,6 +105,7 @@ void masterClockFunc(){
         }
        // noteOn(noteData[i].channel,noteData[i].noteOffArray[n]);
         MIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
+        //usbMIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
         Serial.println("noteOff: " + String(noteData[i].noteOffArray[n]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) ) ;
       }
     }
@@ -190,11 +120,12 @@ void masterClockFunc(){
         }
       //  noteOn(noteData[i].channel,noteData[i].noteOnArray[n]);
         MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
+      //  usbMIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
 
-        unsigned long jitter = noteData[i].sequenceTime - noteData[i].offset;
+        unsigned long delta = noteData[i].sequenceTime - noteData[i].offset;
         unsigned long roundTripTime = micros() - noteData[i].triggerTime;
           
-        avgJitter = (jitter + roundTripTime+ 9*avgJitter)/10;
+        avgDelta = (delta + roundTripTime+ 9*avgDelta)/10;
 
         Serial.println(
           "noteOn: " + String(noteData[i].noteOnArray[n]) 
@@ -202,84 +133,19 @@ void masterClockFunc(){
           + "\tch: " + String(noteData[i].channel)
           + "\tseq: " + String(noteData[i].sequenceTime)
           + "\toff: " + String(noteData[i].offset)
-          + "\tjitter: " + String(jitter) 
+          + "\tdelta: " + String(delta) 
           + "\trtt: " + String(roundTripTime)
-          + "\ttot: " + String(jitter+roundTripTime)
-          + "\tavgJitter: " + String(avgJitter) );
-
+          + "\ttot: " + String(delta+roundTripTime)
+          + "\tavgDelta: " + String(avgDelta) 
+          + "\tstarTime: " + String(startTime));
+        }
       }
     }
   }
 
-/*  if (int(s0[4]) == 1){
-    for (int n = 5; n<132; n++){
-      if (s0[n] != 0){
-        Serial.println("noteOff: " + String(s0[n]) + " bt: " + String(sequence[selectedSequence].beatTracker)) ;
-        noteOff(0);
-        MIDI.sendNoteOff(s0[n], 64, s0[1]);
-      }
-    }
-  };
- 
-  if (s0[0] == 1) {
-    noteOn(0,int(s0[2]));
-    MIDI.sendNoteOn(int(s0[2]), 100, s0[1]);
-    Serial.println("noteOn: " + String(s0[2]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) + "\tjitter: " + String(sequence[selectedSequence].sequenceTimer - sequence[selectedSequence].stepData[s0[127]].offset) ) ;
-  } 
-
-  if (int(s1[4]) == 1){
-    for (int n = 5; n<132; n++){
-      if (s1[n] != 0){
-        activeSection = activeSection + " " + String(s1[n]);
-            Serial.println("noteOff: " + String(s1[n]) + " bt: " + String(sequence[selectedSequence].beatTracker)) ;
-        noteOff(1);
-        MIDI.sendNoteOff(s1[n], 64, s1[1]);
-      }
-    }
-  };
- 
-
-  if (s1[0] == 1) {
-    noteOn(1,int(s1[2]));
-    MIDI.sendNoteOn(int(s1[2]), 100, s1[1]);
-    activeSection = "on " + String(s1[2]);
-    Serial.println("noteOn: " + String(s1[2]) + " bt: " + String(sequence[selectedSequence].beatTracker) + " millis: " + String(millis())+ "   - " + String(iter) ) ;
-  } 
-
-*/
-//    // Serial.println("timer loop 3");
-//    if (s1[0] == 1) {
-//      //Serial.println("seq 1 trigger");
-//
-//      if (s1[2] == 1) {
-//        Serial.println("playing kick");
-//  //      sound3.play(AudioSampleKick);
-//      } else if (s1[2] == 2) {
-//  //      sound0.play(AudioSampleSnare);
-//      } else if (s1[2] == 3) {
-//  //      sound2.play(AudioSampleHihat);
-//      } else if (s1[2] == 4) {
-//  //      sound1.play(AudioSampleTomtom);
-//      } else if (s1[2] == 5) {
-//      //  sound4.play(AudioSampleGong);
-//      } else if (s1[2] == 6) {
-//      //  sound5.play(AudioSampleCashregister);
-//      }
-//
-//    }
-// 
-
-
-  }
-
+  wasPlaying = playing;
+  lastTimer = loopTimer;
   interrupts();
-
-}
-
-
-void changeTempo(uint16_t newTempo){
-  tempo = newTempo;
-  beatLength = 60000000/tempo;
 
 }
     // every beat,

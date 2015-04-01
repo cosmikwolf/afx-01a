@@ -51,21 +51,21 @@ void startupSequence(){
 
 void displayLoop() {
   //Serial.println(F("displayStart"));
-  noInterrupts();
-  display.clearDisplay();   // clears the screen and buffer
+  if (displayTimer > 10000) {
+    display.clearDisplay();   // clears the screen and buffer
 
-  if (settingMode == 0){
-    stepDisplay();
-  } else if (settingMode == 1){
-    sequenceMenuDisplay();
-  } else if (settingMode == 2){
-    globalMenuDisplay();
-  } else {
-    menuItem(settingMode);
+    if (settingMode == 0){
+      stepDisplay();
+    } else if (settingMode == 1){
+      sequenceMenuDisplay();
+    } else if (settingMode == 2){
+      globalMenuDisplay();
+    } else {
+      menuItem(settingMode);
+    }
+
+    display.display();
   }
-
-  display.display();
-  interrupts();
 }
 
 void menuItem(uint8_t menuItem){

@@ -1,26 +1,23 @@
 
 void ledLoop(){
-  noInterrupts();
-  pixelRender();
-  interrupts();
-}
-
-void pixelRender(){
-  if (settingMode == 0){
-    for (int i=0; i < NUMPIXELS; i++){
-      if (i == (sequence[selectedSequence].activeStep) ) {
-        pixels.setPixelColor(i, pixels.Color(255,255,255) );      
-      } else if ( i == selectedStep) {
-         pixels.setPixelColor(selectedStep, Wheel(int(millis()/3)%255) );      
-      } else {
-        if(sequence[selectedSequence].stepData[i].gateType == 0){
-          pixels.setPixelColor(i, pixels.Color(0,0,0));
+  if (pixelTimer > 20000){
+    if (settingMode == 0){
+      for (int i=0; i < NUMPIXELS; i++){
+        if (i == (sequence[selectedSequence].activeStep) ) {
+          pixels.setPixelColor(i, pixels.Color(255,255,255) );      
+        } else if ( i == selectedStep) {
+           pixels.setPixelColor(selectedStep, Wheel(int(millis()/3)%255) );      
         } else {
-          pixels.setPixelColor(i, Wheel( sequence[selectedSequence].getStepPitch(i) ) );
+          if(sequence[selectedSequence].stepData[i].gateType == 0){
+            pixels.setPixelColor(i, pixels.Color(0,0,0));
+          } else {
+            pixels.setPixelColor(i, Wheel( sequence[selectedSequence].getStepPitch(i) ) );
+          }
         }
       }
+      pixels.show();
     }
-    pixels.show();
+  pixelTimer = 0;
   }
 }
 

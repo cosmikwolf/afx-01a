@@ -72,8 +72,9 @@ void Sequencer::calculateStepTimers(){
   }
 }
 
-void Sequencer::clockStart(){
+void Sequencer::clockStart(elapsedMicros startTime){
   firstBeat = true;
+  stepTimer = startTime;
 };
 
 void Sequencer::beatPulse(uint32_t beatLength){
@@ -82,15 +83,11 @@ void Sequencer::beatPulse(uint32_t beatLength){
   noInterrupts();
   this->beatLength = beatLength;
   calculateStepTimers();
-  if(channel == 1){
-    Serial.println("beatPulse - beatlength: " + String(int(beatLength)) + "\tbeatTracker: " + String(beatTracker));
-  }
   beatTimer = 0;
   tempoPulse = true;
 
   if(firstBeat){  
     activeStep = 0;
-    stepTimer = 0;
     beatTracker = 0;
     firstBeat = false; 
   } else {
@@ -124,6 +121,10 @@ void Sequencer::beatPulse(uint32_t beatLength){
 
 void Sequencer::runSequence(NoteDatum *noteData){
   // clear noteData from last iteration.
+  // if (firstBeat){
+  //   Serial.println("firstBeat - runSequenceStart: " + String(sequenceTimer) );
+  // }
+
   unsigned long timer = micros();
 
   noteData->noteOff = false;
@@ -161,6 +162,7 @@ void Sequencer::runSequence(NoteDatum *noteData){
 
     // set notes to be played
     if((stepData[stepNum].gateType != 0 ) ){
+//      if ( sequenceTimer >= stepData[stepNum].offset || firstBeat ) {
 
       if ( sequenceTimer >= stepData[stepNum].offset ) {
         if (stepData[stepNum].noteStatus == 0)  {
@@ -175,7 +177,7 @@ void Sequencer::runSequence(NoteDatum *noteData){
           // Serial.println("Note should be played!" + String(stepNum));
 
 
-          //shut off any notes that are playing.
+          //shut off any other notes that might still be playing.
           for (int stepNum = 0; stepNum < 64; stepNum++){
             if(stepData[stepNum].noteStatus == 1){
               noteData->noteOff = true;
@@ -219,7 +221,6 @@ void Sequencer::runSequence(NoteDatum *noteData){
           // 4 indicates that the note has been played this iteration
           // stepData[activeStep].noteStatus = stepData[activeStep].pitch;   
         }
-
       } else {
         if (stepData[stepNum].noteStatus == 4){
           stepData[stepNum].noteStatus = 0;
@@ -227,7 +228,6 @@ void Sequencer::runSequence(NoteDatum *noteData){
       }
     }
   }
-
   timekeeper = ((micros() - timer)+9*timekeeper)/10;
 }
 

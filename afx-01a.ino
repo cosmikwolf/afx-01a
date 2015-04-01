@@ -1,4 +1,4 @@
-  #include <SPI.h>
+#include <SPI.h>
 #include <SD.h>
 //#include <Audio.h>
 #include <i2c_t3.h>
@@ -69,7 +69,7 @@ uint8_t aminor[] = {
 60, 62, 64, 65, 67, 69, 71,
 72, 74, 76, 77, 79, 81, 83,
 84, 86, 88, 89, 91, 93, 95,
-96, 98, 100, 101, 103, 105, 107
+96, 98, 100, 101, 103, 105, 107,
 108, 110, 112, 113, 115, 117, 119,
 120, 122, 124, 125, 127 };
 
@@ -86,7 +86,7 @@ uint8_t selectedStep = 0;
 uint8_t multiSelect[16];
 //uint8_t selectedStepColor = 0;
 uint8_t numSteps = 16;
-float tempo = 153.0;
+float tempo = 120.0;
 //uint16_t previousTempo;
 //uint16_t stepsPerBeat = 2;
 //uint16_t previousStepsPerBeat = 2;
@@ -104,11 +104,13 @@ boolean  extClock = true;
 //elapsedMicros stepTimer;
 elapsedMicros internalClockTimer;
 elapsedMicros pixelTimer;
+elapsedMicros displayTimer;
+elapsedMicros startTime;
+
 //uint8_t currentStepInitPitch = 0;
 //uint8_t stepLengthBuffer;
-uint32_t timerInterruptInterval = 1000;
-uint32_t clockSyncInterruptInterval = 2000.0;
-uint32_t uiLoopInterruptInterval = 3000.0;
+uint32_t masterClockInterval = 1000;
+uint32_t midiClockInterval = 100.0;
 uint8_t selectedSequence = 0;
 
 unsigned long lastRunTime = 0;
@@ -131,7 +133,7 @@ Sequencer sequence[8];
 NoteDatum noteData[8];
 
 void setup(){
-  Serial.begin(57600);
+  Serial.begin(31250);
   Serial.println("Begin Setup Sequence");
   noInterrupts();
   SPI.setMOSI(7);
@@ -139,7 +141,7 @@ void setup(){
     Serial.println("Begin Setup Sequence 2");
 
   MIDI.begin(MIDI_CHANNEL_OMNI);
-
+  midiSetup();
     Serial.println("Begin Setup Sequence 3");
   delay(1000);
 
@@ -183,35 +185,17 @@ void setup(){
   
   Serial.println("Beginning Master Clock");
 
-  masterClock.begin(masterClockFunc,timerInterruptInterval);
+  masterClock.begin(masterClockFunc,masterClockInterval);
 
   Serial.println("Setup Complete");
-  midiClockSync.begin(midiClockSyncFunc, clockSyncInterruptInterval);
+  midiClockSync.begin(midiClockSyncFunc, midiClockInterval);
 
-  uiLoop.begin(uiLoopFunc, uiLoopInterruptInterval);
   interrupts();
-
  }
 
 uint8_t uiLoopFuncMultiplexer = 0;
 void uiLoopFunc(){
 
-  encoderLoop(); // encoder loop is quick, so it will run each time.
-  uiLoopFuncMultiplexer = (uiLoopFuncMultiplexer+1) % 3;
-
-  switch (uiLoopFuncMultiplexer) {
-    case 0:
-      buttonLoop();
-      break;
-
-    case 1:
-      ledLoop();
-      break;
-
-    case 2:
-      displayLoop();
-      break;
-  }
 //  unsigned long loopTimer = micros();
 //
 //  buttonLoopTime = ((micros() - loopTimer) + 9*buttonLoopTime)/10;
@@ -235,6 +219,22 @@ void uiLoopFunc(){
 
 
 void loop(){
+  encoderLoop(); // encoder loop is quick, so it will run each time.
+  uiLoopFuncMultiplexer = (uiLoopFuncMultiplexer+1) % 3;
+
+  switch (uiLoopFuncMultiplexer) {
+    case 0:
+      buttonLoop();
+      break;
+
+    case 1:
+      ledLoop();
+      break;
+
+    case 2:
+      displayLoop();
+      break;
+  }
 }
 
 
