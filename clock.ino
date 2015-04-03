@@ -15,7 +15,6 @@ unsigned long avgPulseLength;
 unsigned long avgPulseJitter;
 unsigned long pulseLength;
 unsigned long lastBeatLength;
-
 unsigned long lastMicros;
 unsigned long avgInterval;
 unsigned long lastAvgInterval;
@@ -34,9 +33,6 @@ void changeTempo(uint16_t newTempo){
 void masterClockFunc(){
 	// this timer runs once every millisecond 
      // Serial.println("master Clock Start");
-
-  noInterrupts();
-
   elapsedMicros loopTimer = 0;
   avgInterval =((micros() - lastMicros) + 9* avgInterval) / 10;
   timerAvg = (lastTimer + 9*timerAvg) /10;
@@ -75,19 +71,23 @@ void masterClockFunc(){
         }
 
       } else {
+      //  Serial.print(" b1 ");
 
         for (int i=0; i< sequenceCount; i++){
          sequence[i].runSequence(&noteData[i]);
-        }
+        } 
+       // Serial.print(" b2 " );
 
       }
 
       if (internalClockTimer > 60000000/tempo){
+       // Serial.print(" b4 ");
         for (int i=0; i< sequenceCount; i++){
           sequence[i].beatPulse(beatLength);  
         }
         tempoBlip = !tempoBlip;
         internalClockTimer = 0;
+       // Serial.print(" b5 ");
       }
     } else {
       // ext clock sync
@@ -96,6 +96,7 @@ void masterClockFunc(){
       }
     }
 
+       // Serial.print(" b6 ");
 
   for (int i=0; i< sequenceCount; i++){
     if (noteData[i].noteOff == true){
@@ -105,11 +106,13 @@ void masterClockFunc(){
         }
        // noteOn(noteData[i].channel,noteData[i].noteOffArray[n]);
         MIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
-        //usbMIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
-        Serial.println("noteOff: " + String(noteData[i].noteOffArray[n]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) ) ;
+       // usbMIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
+        //Serial.println("noteOff: " + String(noteData[i].noteOffArray[n]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) ) ;
       }
     }
   }
+ 
+      //  Serial.print(" b7 ");
 
 
   for (int i=0; i< sequenceCount; i++){
@@ -122,31 +125,32 @@ void masterClockFunc(){
         MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
       //  usbMIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
 
-        unsigned long delta = noteData[i].sequenceTime - noteData[i].offset;
-        unsigned long roundTripTime = micros() - noteData[i].triggerTime;
-          
-        avgDelta = (delta + roundTripTime+ 9*avgDelta)/10;
+      // These lines below help to troubleshoot latency and jitter issues, but they cause crashes!
+      //  unsigned long delta = noteData[i].sequenceTime - noteData[i].offset;
+      //  unsigned long roundTripTime = micros() - noteData[i].triggerTime;
+      //    
+      //  avgDelta = (delta + roundTripTime+ 9*avgDelta)/10;
 
-        Serial.println(
-          "noteOn: " + String(noteData[i].noteOnArray[n]) 
-          + "\tbt: " + String(sequence[selectedSequence].beatTracker) 
-          + "\tch: " + String(noteData[i].channel)
-          + "\tseq: " + String(noteData[i].sequenceTime)
-          + "\toff: " + String(noteData[i].offset)
-          + "\tdelta: " + String(delta) 
-          + "\trtt: " + String(roundTripTime)
-          + "\ttot: " + String(delta+roundTripTime)
-          + "\tavgDelta: " + String(avgDelta) 
-          + "\tstarTime: " + String(startTime));
+      //  Serial.println(
+      //    "noteOn: " + String(noteData[i].noteOnArray[n]) 
+      //    + "\tbt: " + String(sequence[selectedSequence].beatTracker) 
+      //    + "\tch: " + String(noteData[i].channel)
+      //    + "\tseq: " + String(noteData[i].sequenceTime)
+      //    + "\toff: " + String(noteData[i].offset)
+      //    + "\tdelta: " + String(delta) 
+      //    + "\trtt: " + String(roundTripTime)
+      //    + "\ttot: " + String(delta+roundTripTime)
+      //    + "\tavgDelta: " + String(avgDelta) 
+      //    + "\tstartTime: " + String(startTime));
         }
       }
     }
+   
   }
+      //  Serial.println(" b8 ");
 
   wasPlaying = playing;
   lastTimer = loopTimer;
-  interrupts();
-
 }
     // every beat,
     //  run the sequencer to determine what notes

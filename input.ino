@@ -39,8 +39,8 @@ Adafruit_MCP23017 mcp0;
 Adafruit_MCP23017 mcp1;
 
 // Encoder Stuff
-#define ENCODER1LEFTPIN 3
-#define ENCODER1RIGHTPIN 2
+#define ENCODER1LEFTPIN 2
+#define ENCODER1RIGHTPIN 3
 #define ENCODER2LEFTPIN 16
 #define ENCODER2RIGHTPIN 17
 Encoder knob1(ENCODER1LEFTPIN, ENCODER1RIGHTPIN);
@@ -117,7 +117,6 @@ unsigned long encoderButtonTime;
 unsigned long matrixButtonTime;
 
 void buttonLoop(){
-  noInterrupts();
   unsigned long loopTimer = micros();
   encoderLoop();
     encoderLoopTime = ((micros() - loopTimer) + 9*encoderLoopTime)/10;
@@ -129,7 +128,7 @@ void buttonLoop(){
     encoderButtonTime = ((micros() - loopTimer) + 9*encoderButtonTime)/10;
     loopTimer = micros();
   matrixButtonLoop();
-    matrixButtonTime = ((micros() - loopTimer) + 9*matrixButtonTime)/ 0;
+    matrixButtonTime = ((micros() - loopTimer) + 9*matrixButtonTime)/ 10;
     loopTimer = micros();
 /* if (millis() % 100 == 0){
    Serial.println("encoderLoopTime: " + String(encoderLoopTime) +
@@ -138,7 +137,6 @@ void buttonLoop(){
     "\tmatrixButtonTime: " + String(matrixButtonTime) );
  }
  */
-  interrupts();
 }
 
 void encoderLoop(){
@@ -387,7 +385,7 @@ void smallButtonLoop(){
 
         case 4: // randomize the current sequence
           for(int i=0; i <16; i++){
-            sequence[selectedSequence].stepData[i].gateType = random(2);
+            sequence[selectedSequence].stepData[i].gateType = 1;//random(2);
             sequence[selectedSequence].setStepPitch(i, random(1, 127));
           }
           break;

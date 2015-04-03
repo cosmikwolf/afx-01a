@@ -1,7 +1,7 @@
 #ifndef _Sequencer_h_
 #define _Sequencer_h_
 
-#include <NoteDatum.h>
+#include "NoteDatum.h"
 
 class Sequencer
 {
@@ -24,14 +24,14 @@ class Sequencer
 		boolean  monophonic;
 		uint8_t  beatTracker;		// keeps track of how long the sequence has been playing
 		uint8_t	 activeStep;
-    uint32_t beatLength;
+        uint32_t beatLength;
 		uint8_t  stepCount;  		// sequence length in 1/16th notes]
 		uint16_t beatCount;
 		uint16_t tempo;
 		uint8_t  channel;
 		boolean  tempoPulse;
 		boolean	 firstBeat;		// this signal is sent when midi clock starts.
-		uint32_t beatCounter;	// internal beat counter for sync purposes
+		//uint32_t beatCounter;	// internal beat counter for sync purposes
 		uint32_t stepLength;
 		elapsedMicros stepTimer;			// timer for step to step
 		elapsedMicros sequenceTimer; // timer for sequence interval to sequence interval
@@ -40,16 +40,18 @@ class Sequencer
 		// http://www.happybearsoftware.com/implementing-a-dynamic-array.html
 
 		struct StepDatum {
-			uint16_t			beat;			    // beat in which the note is triggered - recalculated each beat
+			// data that needs to be stored
+			uint8_t			pitch;		    // note pitch
+			uint8_t			gateLength;		// gate length
+			uint8_t 		gateType;		// gate type (hold, repeat, arpeggio)
+			uint8_t			velocity;	    // note velocity
+			uint8_t			glide;			// portamento time - to be implemented.
+			// utility variables - dont need to be saved.
+			//uint8_t			beat;			// beat in which the note is triggered - recalculated each beat
 			unsigned long	offset;		    // note start time offset in mcs from the beat start - recalculated each beat
-			uint8_t				pitch;		    // note pitch
-			uint8_t				gateLength;		// gate length
-			uint8_t 			gateType;			// gate type (hold, repeat, arpeggio)
-			uint8_t				noteStatus;		// if note is playing or not
-			uint8_t				notePlaying;		// stores the note that is played so it can be turned off.
-			uint8_t				velocity;	    // note velocity
-			uint8_t				glide;				// portamento time - to be implemented.
-			unsigned long	lengthMcs;	  // length timer for step in microseconds.
+			uint8_t			noteStatus;		// if note is playing or not
+			uint8_t			notePlaying;	// stores the note that is played so it can be turned off.
+		//	unsigned long	lengthMcs;	    // length timer for step in microseconds.
 			unsigned long	noteTimerMcs;
 			elapsedMicros	stepTimer;		// a timer to compare with lengthMcs to determine when to send noteOff.
 
@@ -58,7 +60,7 @@ class Sequencer
 		StepDatum stepData[64];
 
 		// DEBUG VARIABLES
-		unsigned long timekeeper;
+		//unsigned long timekeeper;
 //	void StepDatum_init(StepDatum *stepDatum);
 
 //	void StepDatum_append(StepDatum *stepDatum, int value);

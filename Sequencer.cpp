@@ -12,13 +12,18 @@ void Sequencer::initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount, flo
 	this->tempo = tempo;
 	this->stepTimer = 0;
 	this->sequenceTimer = 0;
+  selectedPattern = 0;
 	for (int i=0; i < 64; i++){
-    stepData[i].gateLength = 1;
-    stepData[i].velocity = 127;
+    for (int n=0; n < 8; n++ ){
+      stepData[i].gateLength[n] = 1;
+      stepData[i].velocity[n] = 127;
+      stepData[i].pitch[n] = 24;
+    };
 	};
   beatLength = 60000000/tempo;
   calculateStepTimers();
   monophonic == true;
+
 };	
 
 void Sequencer::setTempo(uint16_t tempo){
@@ -55,7 +60,7 @@ void Sequencer::calculateStepTimers(){
  // Serial.println(" stepCount: " + String(stepCount) + " stepLength: " + String(stepLength) + " beatLength: " + String(beatLength) + " tempo: " + String(tempo));
   for (int stepNum = 0; stepNum < 64; stepNum++){
     stepData[stepNum].noteTimerMcs = (stepData[stepNum].gateLength*stepLength);
-    stepData[stepNum].beat = floor(noteTimerMcsCounter / beatLength);
+    //stepData[stepNum].beat = floor(noteTimerMcsCounter / beatLength);
     stepData[stepNum].offset = stepNum*stepLength;
     noteTimerMcsCounter = noteTimerMcsCounter + stepData[stepNum].noteTimerMcs;
   /*
@@ -80,7 +85,6 @@ void Sequencer::clockStart(elapsedMicros startTime){
 void Sequencer::beatPulse(uint32_t beatLength){
   // this is sent every 24 pulses received from midi clock
   // and also when a play or continue command is received.
-  noInterrupts();
   this->beatLength = beatLength;
   calculateStepTimers();
   beatTimer = 0;
@@ -106,7 +110,7 @@ void Sequencer::beatPulse(uint32_t beatLength){
     activeStep = 0;
     stepTimer = 0;
     if(channel == 1){
-      Serial.println("Resetting Sequence Timer " + String(sequenceTimer));
+     // Serial.println("Resetting Sequence Timer " + String(sequenceTimer));
     }
     sequenceTimer = 0;
     // We are resetting the note status when the sequenceTimer is no longer larger than 
@@ -115,8 +119,6 @@ void Sequencer::beatPulse(uint32_t beatLength){
     // so we must reset it manually here.
     stepData[0].noteStatus = 0;
   } 
-  interrupts();
-
 };
 
 void Sequencer::runSequence(NoteDatum *noteData){
@@ -164,7 +166,7 @@ void Sequencer::runSequence(NoteDatum *noteData){
     if((stepData[stepNum].gateType != 0 ) ){
 //      if ( sequenceTimer >= stepData[stepNum].offset || firstBeat ) {
 
-      if ( sequenceTimer >= stepData[stepNum].offset ) {
+      if ( sequenceTimer + 15000>= stepData[stepNum].offset ) {
         if (stepData[stepNum].noteStatus == 0)  {
          //   if (stepNum > activeStep){
          //     activeStep = stepNum;
@@ -228,7 +230,7 @@ void Sequencer::runSequence(NoteDatum *noteData){
       }
     }
   }
-  timekeeper = ((micros() - timer)+9*timekeeper)/10;
+  //timekeeper = ((micros() - timer)+9*timekeeper)/10;
 }
 
 uint8_t Sequencer::getStepPitch(uint8_t step){
