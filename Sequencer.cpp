@@ -12,18 +12,14 @@ void Sequencer::initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount, flo
 	this->tempo = tempo;
 	this->stepTimer = 0;
 	this->sequenceTimer = 0;
-  selectedPattern = 0;
-	for (int i=0; i < 64; i++){
-    for (int n=0; n < 8; n++ ){
-      stepData[i].gateLength[n] = 1;
-      stepData[i].velocity[n] = 127;
-      stepData[i].pitch[n] = 24;
-    };
-	};
+	//for (int i=0; i < 16; i++){
+  //  stepData[i].gateLength = 1;
+  //  stepData[i].velocity = 127;
+  ////  stepData[i].pitch = 24;
+	//};
   beatLength = 60000000/tempo;
   calculateStepTimers();
   monophonic == true;
-
 };	
 
 void Sequencer::setTempo(uint16_t tempo){
@@ -58,11 +54,11 @@ void Sequencer::calculateStepTimers(){
   stepLength = beatLength*beatCount/stepCount;
 
  // Serial.println(" stepCount: " + String(stepCount) + " stepLength: " + String(stepLength) + " beatLength: " + String(beatLength) + " tempo: " + String(tempo));
-  for (int stepNum = 0; stepNum < 64; stepNum++){
-    stepData[stepNum].noteTimerMcs = (stepData[stepNum].gateLength*stepLength);
-    //stepData[stepNum].beat = floor(noteTimerMcsCounter / beatLength);
-    stepData[stepNum].offset = stepNum*stepLength;
-    noteTimerMcsCounter = noteTimerMcsCounter + stepData[stepNum].noteTimerMcs;
+  for (int stepNum = 0; stepNum < 16; stepNum++){
+    stepUtil[stepNum].noteTimerMcs = (stepData[stepNum].gateLength*stepLength);
+    stepUtil[stepNum].beat = floor(noteTimerMcsCounter / beatLength);
+    stepUtil[stepNum].offset = stepNum*stepLength;
+    noteTimerMcsCounter = noteTimerMcsCounter + stepUtil[stepNum].noteTimerMcs;
   /*
     Serial.println( String(channel) + " " + String(stepNum) + " " +
       "ntm: " + String(stepData[stepNum].noteTimerMcs) +
@@ -100,7 +96,7 @@ void Sequencer::beatPulse(uint32_t beatLength){
   }
 
   if (beatTracker == 0) {
-    for(int i = 0; i < 64; i++){
+    for(int i = 0; i < 16; i++){
       // reset the note status for notes that have been played.
       // leave notes that have not been turned off yet.
     //  if (stepData[i].noteStatus == 4){
@@ -117,7 +113,7 @@ void Sequencer::beatPulse(uint32_t beatLength){
     // the offset value. This means that runSequence needs to run at least once before
     // it can reset the note statuses. For the first note, that means it wont ever reset
     // so we must reset it manually here.
-    stepData[0].noteStatus = 0;
+    stepUtil[0].noteStatus = 0;
   } 
 };
 
@@ -145,9 +141,9 @@ void Sequencer::runSequence(NoteDatum *noteData){
     stepTimer = 0;
   }
 
-  for (int stepNum = 0; stepNum < 64; stepNum++){
+  for (int stepNum = 0; stepNum < 16; stepNum++){
     // set notes to be stopped, and marked as played.
-    if ( (stepData[stepNum].stepTimer > stepData[stepNum].noteTimerMcs) && (stepData[stepNum].noteStatus == 1) ){
+    if ( (stepUtil[stepNum].stepTimer > stepUtil[stepNum].noteTimerMcs) && (stepUtil[stepNum].noteStatus == 1) ){
       // if the note is playing and has played out the gate length, end the note.
       noteData->noteOff = true;
       noteData->channel = channel;
@@ -155,19 +151,19 @@ void Sequencer::runSequence(NoteDatum *noteData){
       int n = 0;
       for (int f=0; f<16; f++){
         if (noteData->noteOffArray[f] == NULL){
-          noteData->noteOffArray[f] = stepData[stepNum].notePlaying;
+          noteData->noteOffArray[f] = stepUtil[stepNum].notePlaying;
           break;
         }
       }
-      stepData[stepNum].noteStatus = 4;
+      stepUtil[stepNum].noteStatus = 4;
     }
 
     // set notes to be played
     if((stepData[stepNum].gateType != 0 ) ){
 //      if ( sequenceTimer >= stepData[stepNum].offset || firstBeat ) {
 
-      if ( sequenceTimer + 15000>= stepData[stepNum].offset ) {
-        if (stepData[stepNum].noteStatus == 0)  {
+      if ( sequenceTimer + 15000>= stepUtil[stepNum].offset ) {
+        if (stepUtil[stepNum].noteStatus == 0)  {
          //   if (stepNum > activeStep){
          //     activeStep = stepNum;
          //   }
@@ -180,19 +176,19 @@ void Sequencer::runSequence(NoteDatum *noteData){
 
 
           //shut off any other notes that might still be playing.
-          for (int stepNum = 0; stepNum < 64; stepNum++){
-            if(stepData[stepNum].noteStatus == 1){
+          for (int stepNum = 0; stepNum < 16; stepNum++){
+            if(stepUtil[stepNum].noteStatus == 1){
               noteData->noteOff = true;
               noteData->channel = channel;
               noteData->noteOffStep = stepNum;
               int n = 0;
               for (int f=0; f<16; f++){
                 if (noteData->noteOffArray[f] == NULL){
-                  noteData->noteOffArray[f] = stepData[stepNum].notePlaying;
+                  noteData->noteOffArray[f] = stepUtil[stepNum].notePlaying;
                   break;
                 }
               }
-              stepData[stepNum].noteStatus = 4;
+              stepUtil[stepNum].noteStatus = 4;
             }
           }
           noteData->noteOn = true;
@@ -211,10 +207,10 @@ void Sequencer::runSequence(NoteDatum *noteData){
 
           noteData->triggerTime = micros();
           noteData->sequenceTime = sequenceTimer;
-          noteData->offset = stepData[stepNum].offset;
-          stepData[stepNum].stepTimer = 0;
-          stepData[stepNum].noteStatus = 1;
-          stepData[stepNum].notePlaying = stepData[stepNum].pitch;
+          noteData->offset = stepUtil[stepNum].offset;
+          stepUtil[stepNum].stepTimer = 0;
+          stepUtil[stepNum].noteStatus = 1;
+          stepUtil[stepNum].notePlaying = stepData[stepNum].pitch;
           // noteStatus indicates the status of the next note
           // 0 indicates not playing, not queued
           // 1 indicates the note is currently playing
@@ -224,8 +220,8 @@ void Sequencer::runSequence(NoteDatum *noteData){
           // stepData[activeStep].noteStatus = stepData[activeStep].pitch;   
         }
       } else {
-        if (stepData[stepNum].noteStatus == 4){
-          stepData[stepNum].noteStatus = 0;
+        if (stepUtil[stepNum].noteStatus == 4){
+          stepUtil[stepNum].noteStatus = 0;
         }
       }
     }

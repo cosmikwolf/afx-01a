@@ -9,27 +9,30 @@
 #include "Sequencer.h"
 #include <MIDI.h>
 #include "NoteDatum.h"
+#include <EEPROM.h>
+#include "EEPROMAnything.h"
 
-#define SEQUENCE_GENE 64
-#define SEQUENCE_NAME 65
-#define SEQUENCE_SPED 66
-#define SEQUENCE_TRAN 67
-#define SEQUENCE_LENG 68
-#define SEQUENCE_QUAN 69
-#define SEQUENCE_EUCL 70
-#define SEQUENCE_GENE 71 
-#define SEQUENCE_ORDE 72
-#define SEQUENCE_RAND 73 
-#define SEQUENCE_POSI 74
-#define SEQUENCE_GLID 75 
-#define SEQUENCE_MIDI 76
-#define SEQUENCE_CV   77
-#define SEQUENCE_GATE 78
-#define GLOBAL_MIDI   91
-#define GLOBAL_SAVE   92
-#define GLOBAL_LOAD   93
-#define GLOBAL_FILE   94
-#define TEMPO_SET     95
+#define SEQUENCE_GENE  64
+#define SEQUENCE_NAME  65
+#define SEQUENCE_SPED  66
+#define SEQUENCE_TRAN  67
+#define SEQUENCE_LENG  68
+#define SEQUENCE_QUAN  69
+#define SEQUENCE_EUCL  70
+#define SEQUENCE_GENE  71 
+#define SEQUENCE_ORDE  72
+#define SEQUENCE_RAND  73 
+#define SEQUENCE_POSI  74
+#define SEQUENCE_GLID  75 
+#define SEQUENCE_MIDI  76
+#define SEQUENCE_CV    77
+#define SEQUENCE_GATE  78
+#define GLOBAL_MIDI    91
+#define GLOBAL_SAVE    92
+#define GLOBAL_LOAD    93
+#define GLOBAL_FILE    94
+#define TEMPO_SET      95
+#define PATTERN_SELECT 96
 
 uint8_t menuSelection = 127;
 // Neopixel Stuff
@@ -90,7 +93,7 @@ IntervalTimer uiLoop;
 uint8_t selectedStep = 0;
 uint8_t multiSelect[16];
 uint8_t numSteps = 16;
-float tempo = 500.0;
+float tempo = 120.0;
 boolean  extClock = false;
 elapsedMicros internalClockTimer;
 elapsedMicros pixelTimer;
@@ -111,20 +114,22 @@ elapsedMicros runTimer = 0;
 String activeSection;
 // Lets Begin!
 
-uint8_t sequenceCount = 8;
+uint8_t sequenceCount = 2;
 
+Sequencer sequence[2];
+NoteDatum noteData[2];
 
-Sequencer sequence[8];
-NoteDatum noteData[8];
+boolean need2save = false;
+elapsedMicros saveTimer;
+uint8_t currentPattern = 0;
 
 void setup(){
   Serial.begin(57600);
   Serial.println("Begin Setup Sequence");
-  noInterrupts();
+
   SPI.setMOSI(7);
   SPI.setSCK(14);
   Serial.println("Begin Setup Sequence 2");
-
   MIDI.begin(MIDI_CHANNEL_OMNI);
   midiSetup();
   Serial.println("Begin Setup Sequence 3");
@@ -132,30 +137,39 @@ void setup(){
 
   display.begin(SSD1306_SWITCHCAPVCC);
 
-    Serial.println("Begin Setup Sequence 4");
+  Serial.println("Begin Setup Sequence 4");
 
   pixels.begin();
 
-    Serial.println("Begin Setup Sequence 5");
-  startupSequence();
+  Serial.println("Begin Setup Sequence 5");
+  buttonSetup();  
 
   Serial.println("Begin Setup Sequence 6");
+  startupSequence();
 
-  buttonSetup();  
- // audioSetup();
+  // audioSetup();
 
+  Serial.println("testing eeprom");
+  Serial.println("Length: " + String(EEPROM.length()));
+  Serial.println("read 0" + String(EEPROM.read(0)));
+  Serial.println("reading EEPROM..." + String(micros()));
+  // EEPROM.update(0, 0xff);
+
+  for(int i=0; i< sequenceCount; i++){
+    int index = i * sizeof(sequence[0].stepData);
+    EEPROM_readAnything(index, sequence[i].stepData);
+  }
+
+  Serial.println("done reading..." + String(micros()));
+  
+  Serial.println("read 0" + String(EEPROM.read(0)));
+  
+  
   Serial.println("Begin Sequence Object Initialization");
 
-//initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
+  //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
   sequence[0].initialize(1, 16, 4, tempo);
   sequence[1].initialize(2, 16, 4, tempo);
-  sequence[2].initialize(3, 16, 4, tempo);
-  sequence[3].initialize(4, 16, 4, tempo);
-  sequence[4].initialize(5, 16, 4, tempo);
-  sequence[5].initialize(6, 16, 4, tempo);
-  sequence[6].initialize(7, 16, 4, tempo);
-  sequence[7].initialize(8, 16, 4, tempo);
-
 
   Serial.println("Sequence Object Initialization Complete");
   Serial.println("sizeof midiNotes:" + String(sizeof(midiNotes)));
@@ -167,49 +181,29 @@ void setup(){
   Serial.println("sizeeof 1 velocity step:" + String(sizeof(sequence[0].stepData[0].velocity)));
   Serial.println("sizeeof 1 glide step:" + String(sizeof(sequence[0].stepData[0].glide)));
   Serial.println("sizeof stepData:" + String(sizeof(sequence[0].stepData)));
-  Serial.println("sizeof stepData.stepTimer:" + String(sizeof(sequence[0].stepData[0].stepTimer)));
+  Serial.println("sizeof stepUtil:" + String(sizeof(sequence[0].stepUtil)));
+  Serial.println("sizeof stepData.stepTimer:" + String(sizeof(sequence[0].stepUtil[0].stepTimer)));
   Serial.println("sizeof sequence:" + String(sizeof(sequence[0])));
   
   Serial.println("Beginning Master Clock");
-
   masterClock.begin(masterClockFunc,masterClockInterval);
-
-  Serial.println("Setup Complete");
+  Serial.println("Beginning MIDI Clock");
   midiClockSync.begin(midiClockSyncFunc, midiClockInterval);
 
   Serial.println("newFreeRam: " + String(newFreeRam()));
-  interrupts();
+
+  Serial.println("Setup Complete");
+
  }
 
 uint8_t uiLoopFuncMultiplexer = 0;
-void uiLoopFunc(){
-
-//  unsigned long loopTimer = micros();
-//
-//  buttonLoopTime = ((micros() - loopTimer) + 9*buttonLoopTime)/10;
-//  loopTimer = micros();
-//
-//  ledLoopTime = ((micros() - loopTimer) + 9*ledLoopTime)/10;
-//  loopTimer = micros();
-//
-//  // audioLoop();
-//
-//  displayLoopTime = ((micros() - loopTimer) + 9*displayLoopTime)/10;
-//
-//  if (millis() % 100 == 0){
-//    Serial.println("buttonLoopTime: " + String(buttonLoopTime) +
-//      "\tledLoopTime: " + String(ledLoopTime) +
-//     "\tdisplayLoopTime: " + String(displayLoopTime) );
-//  }
-}
-
-
-
 
 void loop(){
   encoderLoop(); // encoder loop is quick, so it will run each time.
   uiLoopFuncMultiplexer = (uiLoopFuncMultiplexer+1) % 3;
   noInterrupts();
+ // if (need2save && saveTimer > 10000000) {
+ // }
   switch (uiLoopFuncMultiplexer) {
     case 0:
       buttonLoop();

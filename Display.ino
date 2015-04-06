@@ -19,7 +19,8 @@ void startupSequence(){
   display.println("±OHM±");
   display.display();
   display.startscrollleft(0, 15);
-    Serial.println("display 1");
+    
+  Serial.println("display 1");
 
   nonBlockingRainbow(2);
     delay(100);
@@ -71,6 +72,8 @@ void displayLoop() {
 void menuItem(uint8_t menuItem){
   uint8_t globalSkip[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
   uint8_t spedSkip[] = {1,2,3,5,6,7,8,9,10,11,12,13,14,15};
+  uint8_t patternSkip[] = {8,9,10,11,12,13,14,15};
+  uint8_t generatorSkip[] = {1,2,3,5,6,7,9,10,11,12,13,14,15};
 
   switch (menuItem){
     case GLOBAL_MIDI:
@@ -93,7 +96,7 @@ void menuItem(uint8_t menuItem){
 
     case SEQUENCE_SPED:
 
-      nonBlockingRainbow(5, spedSkip, 15 );
+      nonBlockingRainbow(5, spedSkip, 14 );
 
       display.setTextColor(WHITE);
       display.setCursor(0,1);
@@ -119,14 +122,20 @@ void menuItem(uint8_t menuItem){
 
       break;
     case SEQUENCE_GENE:
+      nonBlockingRainbow(2, generatorSkip, 13 );
       display.setTextColor(WHITE);
       display.setCursor(0,1);
       display.setTextSize(1);
       display.println("Sequence Generator");
+      display.setCursor(0,20);
+      display.println("Clear All Notes");
+      display.println("Random some notes");
+      display.println("Random all notes");
+
       break;
 
     case TEMPO_SET:
-      nonBlockingRainbow(5, globalSkip, 15 );
+      nonBlockingRainbow(5, globalSkip, 16 );
 
       display.setTextColor(WHITE);
       display.setCursor(0,0);
@@ -142,6 +151,17 @@ void menuItem(uint8_t menuItem){
 
       break;
 
+    case PATTERN_SELECT:
+      nonBlockingRainbow(3, patternSkip, 8 );
+
+      display.setTextColor(WHITE);
+      display.setCursor(0,0);
+      display.setTextSize(3);
+      display.println("PATTERN");
+      display.setCursor(0,30);
+      display.println("SELECT" );
+      
+      break;
     default:
       display.setTextColor(WHITE);
       display.setCursor(0,1);
@@ -218,9 +238,13 @@ void stepDisplay(){
 //  if (blipTimer > 20000) {
 //    tempoBlip = false;
 //  }
+  display.setTextColor(WHITE);
+  display.setTextSize(2);
+  display.setCursor(86,45);
+  display.println( String(selectedSequence) + "|" + String(currentPattern) );
 
   display.setTextSize(1);
-  display.setCursor(105,0);
+  display.setCursor(86,35);
     display.setTextColor(WHITE);
   if (tempoBlip) { display.setTextColor(BLACK, WHITE); };
   if (extClock == true) {
@@ -229,11 +253,6 @@ void stepDisplay(){
     display.println(String(tempo));
   }
   display.setTextColor(WHITE);
-
-  display.setTextSize(2);
-  display.setCursor(106,10);
-  display.print(String(selectedSequence));
-
 
   display.setTextSize(1);
   display.setTextColor(WHITE);

@@ -85,9 +85,9 @@ void nonBlockingRainbow(uint8_t interval, uint8_t *skipArr, uint8_t skipArrSize)
 
   j = positive_modulo( millis()/interval, 255 );
 
-  for(i=0; i<pixels.numPixels(); i++) {
+  for(i=0; i < pixels.numPixels(); i++) {
     bool skip = false;
-    for(n=0; n< skipArrSize; n++){
+    for(n=0; n < skipArrSize; n++){
       if (skipArr[n] == i){
         skip = true;
       }

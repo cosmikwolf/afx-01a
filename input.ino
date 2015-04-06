@@ -67,6 +67,7 @@ void buttonSetup() {
 
   mcp1.begin(1);
   delay(10);
+  Serial.println("button setup start 2");
 
   for (int i = 0; i<16; i++) {
     mcp0.pinMode(i, INPUT);
@@ -74,6 +75,7 @@ void buttonSetup() {
     mcp1.pinMode(i, INPUT);
     mcp1.pullUp(i, HIGH);  // turn on a 100K pullup internally
   }
+  Serial.println("button setup start");
 
   buttons[0].attach(mcp0, BUTTONPIN0,   0 ); 
   buttons[1].attach(mcp0, BUTTONPIN1,   0 ); 
@@ -238,8 +240,12 @@ void matrixButtonLoop(){
   }
 }
 
-void menuItemButtonHandler(uint8_t settingMode, uint8_t buttonNum){
-  switch (settingMode) {
+// adding a menu item requires an entry here, in the menuItemButtonHandler, as well as a 
+// menuItem case in the display.ino file. all cases should be referenced by a #define that 
+// represents the menu item.
+
+void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
+  switch (selectedMode) {
     case GLOBAL_MIDI:
       switch(buttonNum){
         case 0:
@@ -259,7 +265,45 @@ void menuItemButtonHandler(uint8_t settingMode, uint8_t buttonNum){
           break;
       }
       break;
-  }
+    case SEQUENCE_GENE:
+    //      display.println("Clear All Notes");
+    //  display.println("Random some notes");
+     // display.println("Random all notes");
+
+      switch(buttonNum){
+        case 0:
+          Serial.println("Clear All Notes");
+          for(int i=0; i <16; i++){
+            sequence[selectedSequence].stepData[i].gateType = 0;//random(2);
+            sequence[selectedSequence].stepData[i].gateLength = 1;//random(2);
+            sequence[selectedSequence].stepData[i].Velocity = 72;//random(2);
+            sequence[selectedSequence].setStepPitch(i, 24);
+          }
+          settingMode = 0;
+          break;
+        case 4:
+          Serial.println("Random some notes");
+          for(int i=0; i <16; i++){
+            sequence[selectedSequence].stepData[i].gateType = random(2);
+            sequence[selectedSequence].setStepPitch(i, random(1, 127));
+          }
+          settingMode = 0;
+          break;
+        case 8:
+          Serial.println("Random all notes");
+          for(int i=0; i <16; i++){
+            sequence[selectedSequence].stepData[i].gateType = 1;//random(2);
+            sequence[selectedSequence].setStepPitch(i, random(1, 127));
+          };
+          settingMode = 0;
+          break;
+      }
+      break;
+    case PATTERN_SELECT:
+      changePattern(buttonNum, true);
+      settingMode = 0;
+      break;
+   }
 };
 
 
@@ -339,6 +383,8 @@ void globalMenuButtonHandler(uint8_t buttonId){
 }
 
 void stepModeButtonHandler(uint8_t i){
+  need2save = true;
+  saveTimer = 0;
   if(selectedStep == i && stepMode == 0){
     stepMode = 1; // change the step length
     knob2.write(0);
@@ -383,11 +429,15 @@ void smallButtonLoop(){
           settingMode = positive_modulo(settingMode + 1, 3);
           break;
 
-        case 4: // randomize the current sequence
-          for(int i=0; i <16; i++){
-            sequence[selectedSequence].stepData[i].gateType = 1;//random(2);
-            sequence[selectedSequence].setStepPitch(i, random(1, 127));
+        case 4:
+          if (settingMode == PATTERN_SELECT){
+            stepMode = 0;
+            settingMode = 0;
+          } else {
+            stepMode = 4; 
+            settingMode = PATTERN_SELECT;
           }
+  
           break;
 
         // right two, bottom up

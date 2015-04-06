@@ -47,17 +47,21 @@ class Sequencer
 			uint8_t			velocity;	    // note velocity
 			uint8_t			glide;			// portamento time - to be implemented.
 			// utility variables - dont need to be saved.
-			//uint8_t			beat;			// beat in which the note is triggered - recalculated each beat
+		};
+
+		struct StepUtil {
+			uint16_t		beat;			// beat in which the note is triggered - recalculated each beat
 			unsigned long	offset;		    // note start time offset in mcs from the beat start - recalculated each beat
 			uint8_t			noteStatus;		// if note is playing or not
 			uint8_t			notePlaying;	// stores the note that is played so it can be turned off.
-		//	unsigned long	lengthMcs;	    // length timer for step in microseconds.
+			unsigned long	lengthMcs;	    // length timer for step in microseconds.
 			unsigned long	noteTimerMcs;
 			elapsedMicros	stepTimer;		// a timer to compare with lengthMcs to determine when to send noteOff.
 
 		};
 	 	
-		StepDatum stepData[64];
+		StepDatum stepData[16];
+		StepUtil stepUtil[16];
 
 		// DEBUG VARIABLES
 		//unsigned long timekeeper;
