@@ -58,7 +58,6 @@ int16_t pitchBuffer;
 int16_t gateLengthBuffer;
 int8_t  gateTypeBuffer;
 
-
 void buttonSetup() {
   Serial.println("button setup start");
 
@@ -203,10 +202,10 @@ void encoderLoop(){
       case SEQUENCE_SPED: // speed setting
         switch(menuSelection){
           case 0:
-            sequence[selectedSequence].stepCount =  positive_modulo(stepModeBuffer + knob2Buffer, 63)+1;
+            sequence[selectedSequence].setStepCount( positive_modulo(stepModeBuffer + knob2Buffer, 63)+1 );
             break;
           case 1: 
-            sequence[selectedSequence].beatCount =  positive_modulo(stepModeBuffer + knob2Buffer, 127) + 1;
+            sequence[selectedSequence].setBeatCount( positive_modulo(stepModeBuffer + knob2Buffer, 127) + 1 );
             break;
         }
         break;
@@ -276,9 +275,11 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
           for(int i=0; i <16; i++){
             sequence[selectedSequence].stepData[i].gateType = 0;//random(2);
             sequence[selectedSequence].stepData[i].gateLength = 1;//random(2);
-            sequence[selectedSequence].stepData[i].Velocity = 72;//random(2);
+            sequence[selectedSequence].stepData[i].velocity = 72;//random(2);
             sequence[selectedSequence].setStepPitch(i, 24);
           }
+          sequence[selectedSequence].stepCount = 16;//random(2);
+          sequence[selectedSequence].beatCount = 4;//random(2);
           settingMode = 0;
           break;
         case 4:
@@ -300,7 +301,15 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
       }
       break;
     case PATTERN_SELECT:
-      changePattern(buttonNum, true);
+
+    //  changePattern(buttonNum, true, true);
+
+      if (smallButtons[4].read() == false){
+        changePattern(buttonNum, true, true);
+      } else {
+        changePattern(buttonNum, true, false);
+      }
+
       settingMode = 0;
       break;
    }

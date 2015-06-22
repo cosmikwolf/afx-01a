@@ -19,7 +19,7 @@ void Sequencer::initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount, flo
 	//};
   beatLength = 60000000/tempo;
   calculateStepTimers();
-  monophonic == true;
+  monophonic = true;
 };	
 
 void Sequencer::setTempo(uint16_t tempo){
@@ -37,8 +37,18 @@ void Sequencer::setGateLength(uint8_t step, uint8_t length){
   calculateStepTimers();
 };
 
+void Sequencer::setStepCount(uint8_t stepCountNew){
+  stepCount = stepCountNew;
+  calculateStepTimers();
+};
+
+void Sequencer::setBeatCount(uint16_t beatCountNew){
+  beatCount = beatCountNew;
+  calculateStepTimers();
+};
+
 void Sequencer::setGateType(uint8_t step, uint8_t gate){
-	stepData[step].gateType = gate;
+  stepData[step].gateType = gate;
 }
 
 void Sequencer::setStepVelocity(uint8_t step, uint8_t velocity){
@@ -71,6 +81,9 @@ void Sequencer::calculateStepTimers(){
     );
   */
   }
+
+
+  
 }
 
 void Sequencer::clockStart(elapsedMicros startTime){

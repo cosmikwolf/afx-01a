@@ -20,13 +20,13 @@ class Sequencer
 		void beatPulse(uint32_t beatLength);
 		void clockStart(elapsedMicros startTime);
 		int  positive_modulo(int i, int n);
+		void setStepCount(uint8_t stepCountNew);
+		void setBeatCount(uint16_t beatCountNew);
 		uint8_t  getStepPitch(uint8_t step);
 		boolean  monophonic;
 		uint8_t  beatTracker;		// keeps track of how long the sequence has been playing
 		uint8_t	 activeStep;
-        uint32_t beatLength;
-		uint8_t  stepCount;  		// sequence length in 1/16th notes]
-		uint16_t beatCount;
+    uint32_t beatLength;
 		uint16_t tempo;
 		uint8_t  channel;
 		boolean  tempoPulse;
@@ -38,6 +38,10 @@ class Sequencer
 		elapsedMicros beatTimer;
 
 		// http://www.happybearsoftware.com/implementing-a-dynamic-array.html
+
+		// data that needs to be stored
+		uint8_t  stepCount;  		// sequence length in 1/16th notes]
+		uint16_t beatCount;
 
 		struct StepDatum {
 			// data that needs to be stored

@@ -12,7 +12,7 @@
 #include <EEPROM.h>
 #include "EEPROMAnything.h"
 
-#define SEQUENCE_GENE  64
+//#define SEQUENCE_GENE  64
 #define SEQUENCE_NAME  65
 #define SEQUENCE_SPED  66
 #define SEQUENCE_TRAN  67
@@ -122,6 +122,7 @@ NoteDatum noteData[2];
 boolean need2save = false;
 elapsedMicros saveTimer;
 uint8_t currentPattern = 0;
+uint8_t queuePattern = 0;
 
 void setup(){
   Serial.begin(57600);
@@ -155,10 +156,8 @@ void setup(){
   Serial.println("reading EEPROM..." + String(micros()));
   // EEPROM.update(0, 0xff);
 
-  for(int i=0; i< sequenceCount; i++){
-    int index = i * sizeof(sequence[0].stepData);
-    EEPROM_readAnything(index, sequence[i].stepData);
-  }
+
+  loadPattern(0);
 
   Serial.println("done reading..." + String(micros()));
   

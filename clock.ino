@@ -82,6 +82,11 @@ void masterClockFunc(){
 
       if (internalClockTimer > 60000000/tempo){
        // Serial.print(" b4 ");
+       if (queuePattern != currentPattern) {
+          
+          changePattern(queuePattern, true, true);
+       }
+
         for (int i=0; i< sequenceCount; i++){
           sequence[i].beatPulse(beatLength);  
         }
@@ -96,7 +101,7 @@ void masterClockFunc(){
       }
     }
 
-       // Serial.print(" b6 ");
+    // Serial.print(" b6 ");
 
   for (int i=0; i< sequenceCount; i++){
     if (noteData[i].noteOff == true){

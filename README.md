@@ -14,9 +14,9 @@ The beginnings of an open source hardware sequencer project based on the Teensy 
 	-  Teensy 3.1 Microcontroller
 	-  Atmel SAM2695 Sound Chip
 	-  128x64 OLED Graphic LCD
-	-  8x8 RGB LED note indicators
-	-  8 vertical buttons
-	-  8 horizontal buttons
+	-  4x4 RGB LED note indicators
+	-  4 vertical buttons
+	-  4 horizontal buttons
 	-  3x Rotary Encoders
 	-  4x mode buttons
 

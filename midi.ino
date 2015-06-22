@@ -83,6 +83,10 @@ void midiClockPulseHandler(){
 
     if (masterPulseCount == 0){
       //this gets triggered every quarter note
+      if (queuePattern != currentPattern) {
+          changePattern(queuePattern, true, true);
+      }
+
       beatLength = masterTempoTimer;
       masterTempoTimer = 0;
       tempoBlip = !tempoBlip;
