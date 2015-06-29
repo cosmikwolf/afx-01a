@@ -300,6 +300,23 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
           break;
       }
       break;
+
+      case SEQUENCE_QUAN:
+        switch(buttonNum){
+          case 0:
+            sequence[selectedSequence].quantizeKey = 1;
+            settingMode = 0;
+          break;
+          case 4:
+            sequence[selectedSequence].quantizeKey = 2;
+            settingMode = 0;
+          break;
+          case 8:
+            sequence[selectedSequence].quantizeKey = 0;
+            settingMode = 0;
+          break;
+        }
+      break;
     case PATTERN_SELECT:
 
     //  changePattern(buttonNum, true, true);

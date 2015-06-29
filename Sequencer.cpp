@@ -207,23 +207,28 @@ void Sequencer::runSequence(NoteDatum *noteData){
           noteData->noteOn = true;
           noteData->channel = channel;
           noteData->noteOnStep = stepNum;
-
           
-
-          for (int i=0; i<16; i++){
-            if (noteData->noteOnArray[i] == NULL){
-              noteData->noteOnArray[i] = stepData[stepNum].pitch;
-              noteData->noteVelArray[i] = stepData[stepNum].velocity;
-              break;
-            }
-          }
-
           noteData->triggerTime = micros();
           noteData->sequenceTime = sequenceTimer;
           noteData->offset = stepUtil[stepNum].offset;
           stepUtil[stepNum].stepTimer = 0;
           stepUtil[stepNum].noteStatus = 1;
-          stepUtil[stepNum].notePlaying = stepData[stepNum].pitch;
+
+          if (quantizeKey == 1){
+            stepUtil[stepNum].notePlaying = quantizePitch(stepData[stepNum].pitch, aminor, 1);
+            Serial.println("quantized note: " + String(stepData[stepNum].pitch) + " -> " + String(stepUtil[stepNum].notePlaying));
+          } else {
+            stepUtil[stepNum].notePlaying = stepData[stepNum].pitch;          
+          }
+
+          for (int i=0; i<16; i++){
+            if (noteData->noteOnArray[i] == NULL){
+              noteData->noteOnArray[i] = stepUtil[stepNum].notePlaying;                
+              noteData->noteVelArray[i] = stepData[stepNum].velocity;
+              break;
+            }
+          }
+
           // noteStatus indicates the status of the next note
           // 0 indicates not playing, not queued
           // 1 indicates the note is currently playing
@@ -240,6 +245,22 @@ void Sequencer::runSequence(NoteDatum *noteData){
     }
   }
   //timekeeper = ((micros() - timer)+9*timekeeper)/10;
+}
+
+uint8_t Sequencer::quantizePitch(uint8_t note, uint32_t scale, bool direction){
+  uint8_t count = 0;
+  while ( (0b100000000000 >> (note % 12) ) & ~scale ) {
+    if (direction){
+      note += 1;
+    } else {
+      note -= 1;
+    }
+    count += 1;
+    if (count > 12) {
+      break; // emergency break if while loop goes OOC
+    }
+  }
+  return note;
 }
 
 uint8_t Sequencer::getStepPitch(uint8_t step){

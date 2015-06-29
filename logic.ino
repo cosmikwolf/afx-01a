@@ -21,13 +21,15 @@ void saveCurrentPattern() {
   need2save = false;  
   for(int i=0; i < sequenceCount; i++){
 
-  	int index = int(( i  + currentPattern * sequenceCount ) * ( sizeof(sequence[0].stepData) + sizeof(sequence[0].stepCount) + sizeof(sequence[0].beatCount) )); 
+  	int index = int(( i  + currentPattern * sequenceCount ) * ( sizeof(sequence[0].stepData) + sizeof(sequence[0].stepCount) + sizeof(sequence[0].beatCount) + sizeof(sequence[0].quantizeKey) )); 
 		Serial.print(String(index) + " ");
     EEPROM_writeAnything(index, sequence[i].stepData);
     index += sizeof(sequence[i].stepData);								
  		EEPROM_writeAnything(index, sequence[i].stepCount);
     index += sizeof(sequence[i].stepCount);
- 		EEPROM_writeAnything(index, sequence[i].beatCount);
+    EEPROM_writeAnything(index, sequence[i].beatCount);
+    index += sizeof(sequence[i].quantizeKey);
+    EEPROM_writeAnything(index, sequence[i].quantizeKey);
 
   }
 
@@ -49,7 +51,9 @@ void loadPattern(uint8_t pattern) {
  			EEPROM_readAnything(index, sequence[i].stepCount);
     	index += sizeof(sequence[i].stepCount);
  			EEPROM_readAnything(index, sequence[i].beatCount);
-
+      index += sizeof(sequence[i].quantizeKey);
+      EEPROM_readAnything(index, sequence[i].quantizeKey);
+  
     }
 //  } else {
   	//return pattern;

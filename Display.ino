@@ -160,8 +160,33 @@ void menuItem(uint8_t menuItem){
       display.println("PATTERN");
       display.setCursor(0,30);
       display.println("SELECT" );
+      break;
+
+    case SEQUENCE_QUAN:
+      nonBlockingRainbow(2, generatorSkip, 13 );
+      display.setTextColor(WHITE);
+      display.setCursor(0,1);
+      display.setTextSize(1);
+      display.println("Note Quantizer");
+      display.setCursor(0,20);
+      display.println("Quantize On - B Minor");
+      display.println("Quantize On - D Major");
+      display.println("Quantize Off");
       
       break;
+
+ //   case SEQUENCE_TRAN:
+ //     nonBlockingRainbow(2, generatorSkip, 13 );
+ //     display.setTextColor(WHITE);
+ //     display.setCursor(0,1);
+ //     display.setTextSize(1);
+ //     display.println("Note Transposer - NOT IMPLEMENTED YET");
+ //     display.setCursor(0,20);
+ //     display.println("Transpose 12 notes");
+ //     display.println("Transpose Off");
+ //     
+      break;
+
     default:
       display.setTextColor(WHITE);
       display.setCursor(0,1);
@@ -263,7 +288,19 @@ void stepDisplay(){
       display.setTextColor(BLACK, WHITE);
     }
     display.setTextSize(3);
-    display.print(String(midiNotes[sequence[selectedSequence].stepData[selectedStep].pitch]));
+    display.print(
+      midiNotes[sequence[selectedSequence].stepData[selectedStep].pitch][0]
+    );
+    display.setTextSize(2);
+    display.print(
+      midiNotes[sequence[selectedSequence].stepData[selectedStep].pitch][1]
+    );
+    display.print(
+      midiNotes[sequence[selectedSequence].stepData[selectedStep].pitch][2]
+    );
+        display.print(
+      midiNotes[sequence[selectedSequence].stepData[selectedStep].pitch][3]
+    );
     display.setTextColor(WHITE);
     display.setTextSize(1);
     display.setCursor(50,0);

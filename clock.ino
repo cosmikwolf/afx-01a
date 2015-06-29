@@ -101,33 +101,56 @@ void masterClockFunc(){
       }
     }
 
-    // Serial.print(" b6 ");
 
-  for (int i=0; i< sequenceCount; i++){
-    if (noteData[i].noteOff == true){
-      for (int n=0; n< 16; n++){
-        if (noteData[i].noteOffArray[n] == NULL){
-          continue;
+    for (int i=0; i< sequenceCount; i++){
+      if (noteData[i].noteOff == true){
+        for (int n=0; n< 16; n++){
+          if (noteData[i].noteOffArray[n] == NULL){
+            continue;
+          }
+         // noteOn(noteData[i].channel,noteData[i].noteOffArray[n]);
+          MIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
+         // usbMIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
+          //Serial.println("noteOff: " + String(noteData[i].noteOffArray[n]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) ) ;
         }
-       // noteOn(noteData[i].channel,noteData[i].noteOffArray[n]);
-        MIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
-       // usbMIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
-        //Serial.println("noteOff: " + String(noteData[i].noteOffArray[n]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) ) ;
       }
     }
-  }
- 
-      //  Serial.print(" b7 ");
 
 
-  for (int i=0; i< sequenceCount; i++){
-    if (noteData[i].noteOn == true){
-      for (int n=0; n< 16; n++){
-        if (noteData[i].noteOnArray[n] == NULL){
-          continue;
-        }
-      //  noteOn(noteData[i].channel,noteData[i].noteOnArray[n]);
-        MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
+    for (int i=0; i< sequenceCount; i++){
+      if (noteData[i].noteOn == true){
+        for (int n=0; n< 16; n++){
+          if (noteData[i].noteOnArray[n] == NULL){
+            continue;
+          }
+        //  noteOn(noteData[i].channel,noteData[i].noteOnArray[n]);
+
+        //   
+          /*
+          if (sequence[selectedSequence].quantizeKey == 1){
+              bool quantized = false;
+
+              uint32_t aminor = 0b101011010101;
+              uint8_t noteToPlay = noteData[i].noteOnArray[n];
+
+              uint8_t count = 0;
+              while ( (0b100000000000 >> (noteToPlay  % 12) ) & ~aminor ) {
+                noteToPlay += 1;
+                count += 1;
+                if (count > 12) {
+                  break;
+                  Serial.println("quantize error, breaking after 12 modifications");
+                }
+              }
+              Serial.println("quantized note: "+ String(midiNotes[noteData[i].noteOnArray[n]]) + "to: " + String(midiNotes[noteToPlay]));
+              MIDI.sendNoteOn(noteToPlay, noteData[i].noteVelArray[n], noteData[i].channel);
+          } else {
+              MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
+          }
+
+          */
+          MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
+
       //  usbMIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
 
       // These lines below help to troubleshoot latency and jitter issues, but they cause crashes!
@@ -150,7 +173,7 @@ void masterClockFunc(){
         }
       }
     }
-   
+  
   }
       //  Serial.println(" b8 ");
 
