@@ -11,28 +11,30 @@
 #include "NoteDatum.h"
 #include <EEPROM.h>
 #include "EEPROMAnything.h"
+#include "Zetaohm_SAM2695.h"
 
 //#define SEQUENCE_GENE  64
-#define SEQUENCE_NAME  65
-#define SEQUENCE_SPED  66
-#define SEQUENCE_TRAN  67
-#define SEQUENCE_LENG  68
-#define SEQUENCE_QUAN  69
-#define SEQUENCE_EUCL  70
-#define SEQUENCE_GENE  71 
-#define SEQUENCE_ORDE  72
-#define SEQUENCE_RAND  73 
-#define SEQUENCE_POSI  74
-#define SEQUENCE_GLID  75 
-#define SEQUENCE_MIDI  76
-#define SEQUENCE_CV    77
-#define SEQUENCE_GATE  78
-#define GLOBAL_MIDI    91
-#define GLOBAL_SAVE    92
-#define GLOBAL_LOAD    93
-#define GLOBAL_FILE    94
-#define TEMPO_SET      95
-#define PATTERN_SELECT 96
+#define SEQUENCE_NAME   65
+#define SEQUENCE_SPED   66
+#define SEQUENCE_TRAN   67
+#define SEQUENCE_LENG   68
+#define SEQUENCE_QUAN   69
+#define SEQUENCE_EUCL   70
+#define SEQUENCE_GENE   71 
+#define SEQUENCE_ORDE   72
+#define SEQUENCE_RAND   73 
+#define SEQUENCE_POSI   74
+#define SEQUENCE_GLID   75 
+#define SEQUENCE_MIDI   76
+#define SEQUENCE_CV     77
+#define SEQUENCE_GATE   78
+#define GLOBAL_MIDI     91
+#define GLOBAL_SAVE     92
+#define GLOBAL_LOAD     93
+#define GLOBAL_FILE     94
+#define TEMPO_SET       95
+#define PATTERN_SELECT  96
+#define SEQUENCE_SELECT 97
 
 uint8_t menuSelection = 127;
 // Neopixel Stuff
@@ -41,10 +43,13 @@ uint8_t menuSelection = 127;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, NEOPIXELPIN, NEO_RGB + NEO_KHZ800);
 
 // Display Stuff
-#define OLED_DC       4
-#define OLED_CS       5
-#define OLED_RESET    999 
-Adafruit_SSD1306 display(OLED_DC, OLED_RESET, OLED_CS);
+#define OLED_DC       6
+#define OLED_CS       9
+#define OLED_RESET    5 
+//Adafruit_SSD1306 display(OLED_DC, OLED_RESET, OLED_CS);
+Adafruit_SSD1306 display(OLED_RESET); //i2c instantiation 
+
+Zetaohm_SAM2695 sam2695;
 
 float midiFreq[128] = { 8.17, 8.66, 9.17, 9.72, 10.30, 10.91, 11.56, 12.24, 12.97, 13.75, 14.56, 15.43, 16.35, 17.32, 18.35,
  19.44, 20.60, 21.82, 23.12, 24.49, 25.95, 27.50, 29.13, 30.86, 32.70, 34.64, 36.70, 38.89, 41.20, 43.65, 46.24, 48.99, 51.91,
@@ -82,10 +87,10 @@ uint8_t aminor[] = {
 108, 110, 112, 113, 115, 117, 119,
 120, 122, 124, 125, 127  };
 
-
 int8_t  stepMode; 
 int8_t  settingMode;
 boolean playing = false;
+
 
 IntervalTimer masterClock;
 IntervalTimer midiClockSync;
@@ -125,46 +130,73 @@ elapsedMicros saveTimer;
 uint8_t currentPattern = 0;
 uint8_t queuePattern = 0;
 
+
+// BEGIN CLOCK VARIABLES //
+
+  elapsedMicros masterTempoTimer = 0;
+  boolean wasPlaying = false;
+  uint8_t masterPulseCount =24;
+  double bpm;
+  float avgBpm;
+  boolean tempoBlip = false;
+  boolean firstRun = false;
+  elapsedMicros blipTimer = 0;
+  unsigned long beatLength = 60000000/tempo;
+  unsigned long avgDelta;
+  elapsedMicros testTimer;
+  elapsedMicros pulseTimer;
+  unsigned long lastPulseLength;
+  unsigned long avgPulseLength;
+  unsigned long avgPulseJitter;
+  unsigned long pulseLength;
+  unsigned long lastBeatLength;
+  unsigned long lastMicros;
+  unsigned long avgInterval;
+  unsigned long lastAvgInterval;
+  unsigned long intervalJitter;
+  unsigned long avgIntervalJitter;
+  unsigned long lastTimer;
+  unsigned long timerAvg;
+  elapsedMicros printTimer;
+
+// END CLOCK VARIABLES
+
+
 void setup(){
+  // delay here to allow power to be established before starting all the devices.
+  delay(2000);
+
   Serial.begin(57600);
   Serial.println("Begin Setup Sequence");
-
-  SPI.setMOSI(7);
-  SPI.setSCK(14);
+  SPI.setMOSI(11);
+  SPI.setSCK(13);
   Serial.println("Begin Setup Sequence 2");
   MIDI.begin(MIDI_CHANNEL_OMNI);
   midiSetup();
-  Serial.println("Begin Setup Sequence 3");
-  delay(1000);
-
-  display.begin(SSD1306_SWITCHCAPVCC);
-
   Serial.println("Begin Setup Sequence 4");
-
   pixels.begin();
-
+  pixels.setBrightness(45);
   Serial.println("Begin Setup Sequence 5");
-  buttonSetup();  
+  
+  displayStartup();
 
   Serial.println("Begin Setup Sequence 6");
-  startupSequence();
+  buttonSetup();  
 
+  sam2695.programChange(0, 0, 90);       // give our two channels different voices
+  sam2695.programChange(0, 1, 89);
+
+  sam2695.setChannelVolume(0, 64);     // set their volumes
+  sam2695.setChannelVolume(1, 64);
   // audioSetup();
-
-  Serial.println("testing eeprom");
-  Serial.println("Length: " + String(EEPROM.length()));
-  Serial.println("read 0" + String(EEPROM.read(0)));
-  Serial.println("reading EEPROM..." + String(micros()));
+ // Serial.println("testing eeprom");
+ // Serial.println("Length: " + String(EEPROM.length()));
+ // Serial.println("read 0" + String(EEPROM.read(0)));
+ // Serial.println("reading EEPROM..." + String(micros()));
   // EEPROM.update(0, 0xff);
-
-
-  loadPattern(0);
-
+ // loadPattern(0);
   Serial.println("done reading..." + String(micros()));
-  
   Serial.println("read 0" + String(EEPROM.read(0)));
-  
-  
   Serial.println("Begin Sequence Object Initialization");
 
   //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
@@ -189,24 +221,27 @@ void setup(){
   masterClock.begin(masterClockFunc,masterClockInterval);
   Serial.println("Beginning MIDI Clock");
   midiClockSync.begin(midiClockSyncFunc, midiClockInterval);
-
+//
   Serial.println("newFreeRam: " + String(newFreeRam()));
 
   Serial.println("Setup Complete");
+  
 
  }
 
 uint8_t uiLoopFuncMultiplexer = 0;
 
 void loop(){
-  encoderLoop(); // encoder loop is quick, so it will run each time.
+
+  //Serial.println("looping!");
+ // encoderLoop(); // encoder loop is quick, so it will run each time.
   uiLoopFuncMultiplexer = (uiLoopFuncMultiplexer+1) % 3;
   noInterrupts();
  // if (need2save && saveTimer > 10000000) {
  // }
   switch (uiLoopFuncMultiplexer) {
     case 0:
-      buttonLoop();
+     buttonLoop();
       break;
 
     case 1:
@@ -218,6 +253,7 @@ void loop(){
       break;
   }
   interrupts();
+  
 }
 
 

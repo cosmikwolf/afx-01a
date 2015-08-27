@@ -7,46 +7,46 @@ int color = 0;
 #endif
 
 
-void startupSequence(){
-  pixels.setBrightness(45);
+void displayStartup(){
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3D);  // initialize with the I2C addr 0x3D (for the 128x64)
   display.clearDisplay();   // clears the screen and buffer
   display.display(); // show splashscreen
   display.setTextSize(4);
   display.setTextColor(WHITE);
   display.setCursor(6,0);
-  display.println("ZETTA");
+  display.println("ZETA");
   display.setCursor(6,32);
   display.println("±OHM±");
   display.display();
-  display.startscrollleft(0, 15);
+ // display.startscrollleft(0, 15);
     
   Serial.println("display 1");
 
   nonBlockingRainbow(2);
-    delay(100);
+  delay(100);
   nonBlockingRainbow(2);
-    delay(100);
+  delay(100);
   nonBlockingRainbow(2);
-    delay(100); 
+  delay(100); 
   nonBlockingRainbow(2);
-    delay(100);
+  delay(100);
   nonBlockingRainbow(2);
-    delay(100);
+  delay(100);
   nonBlockingRainbow(2);
-    delay(100);
+  delay(100);
 
-      Serial.println("display 2");
+  Serial.println("display 2");
 
-  display.invertDisplay(1);
-      Serial.println("display 3");
-   nonBlockingRainbow(1);
-    delay(100);
+//  display.invertDisplay(1);
+  Serial.println("display 3");
+  nonBlockingRainbow(1);
+  delay(100);
 
-      Serial.println("display 4");
+  Serial.println("display 4");
 
-  display.invertDisplay(0);
-  display.clearDisplay();   // clears the screen and buffer
-  display.stopscroll();
+ // display.invertDisplay(0);
+  //display.clearDisplay();   // clears the screen and buffer
+//  display.stopscroll();
   display.display();
 }
 
@@ -55,18 +55,19 @@ void displayLoop() {
   if (displayTimer > 10000) {
     display.clearDisplay();   // clears the screen and buffer
 
-    if (settingMode == 0){
-      stepDisplay();
-    } else if (settingMode == 1){
-      sequenceMenuDisplay();
-    } else if (settingMode == 2){
-      globalMenuDisplay();
-    } else {
-      menuItem(settingMode);
-    }
-
+   if (settingMode == 0){
+     stepDisplay();
+   } else if (settingMode == 1){
+     sequenceMenuDisplay();
+   } else if (settingMode == 2){
+     globalMenuDisplay();
+   } else {
+     menuItem(settingMode);
+   }
     display.display();
+
   }
+  
 }
 
 void menuItem(uint8_t menuItem){
@@ -158,6 +159,17 @@ void menuItem(uint8_t menuItem){
       display.setCursor(0,0);
       display.setTextSize(3);
       display.println("PATTERN");
+      display.setCursor(0,30);
+      display.println("SELECT" );
+      break;
+
+    case SEQUENCE_SELECT:
+      nonBlockingRainbow(3, patternSkip, 8 );
+
+      display.setTextColor(WHITE);
+      display.setCursor(0,0);
+      display.setTextSize(3);
+      display.println("SEQUENCE");
       display.setCursor(0,30);
       display.println("SELECT" );
       break;

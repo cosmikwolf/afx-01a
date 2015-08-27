@@ -1,28 +1,4 @@
-elapsedMicros masterTempoTimer = 0;
-boolean wasPlaying = false;
-uint8_t masterPulseCount =24;
-double bpm;
-float avgBpm;
-boolean tempoBlip = false;
-boolean firstRun = false;
-elapsedMicros blipTimer = 0;
-unsigned long beatLength = 60000000/tempo;
-unsigned long avgDelta;
-elapsedMicros testTimer;
-elapsedMicros pulseTimer;
-unsigned long lastPulseLength;
-unsigned long avgPulseLength;
-unsigned long avgPulseJitter;
-unsigned long pulseLength;
-unsigned long lastBeatLength;
-unsigned long lastMicros;
-unsigned long avgInterval;
-unsigned long lastAvgInterval;
-unsigned long intervalJitter;
-unsigned long avgIntervalJitter;
-unsigned long lastTimer;
-unsigned long timerAvg;
-elapsedMicros printTimer;
+
 
 void changeTempo(uint16_t newTempo){
   tempo = newTempo;
@@ -110,6 +86,7 @@ void masterClockFunc(){
           }
          // noteOn(noteData[i].channel,noteData[i].noteOffArray[n]);
           MIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
+          sam2695.noteOff(noteData[i].channel, noteData[i].noteOffArray[n]);
          // usbMIDI.sendNoteOff(noteData[i].noteOffArray[n], 64, noteData[i].channel);
           //Serial.println("noteOff: " + String(noteData[i].noteOffArray[n]) + "\tbt: " + String(sequence[selectedSequence].beatTracker) ) ;
         }
@@ -149,6 +126,7 @@ void masterClockFunc(){
           }
 
           */
+          sam2695.noteOn(noteData[i].channel, noteData[i].noteOnArray[n], 127);// noteData[i].noteVelArray[n]);
           MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
 
       //  usbMIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);

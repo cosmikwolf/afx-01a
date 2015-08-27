@@ -3,56 +3,60 @@
 #include <Adafruit_MCP23017.h>
 #include <Encoder.h>
 
-#define BUTTONPIN0  3 
-#define BUTTONPIN1  2 
-#define BUTTONPIN2  1 
-#define BUTTONPIN3  0 
-#define BUTTONPIN4  7 
-#define BUTTONPIN5  6
-#define BUTTONPIN6  5 
-#define BUTTONPIN7  4 
-#define BUTTONPIN8  11 
-#define BUTTONPIN9  10
-#define BUTTONPIN10 9 
-#define BUTTONPIN11 8
-#define BUTTONPIN12 15 
-#define BUTTONPIN13 14
-#define BUTTONPIN14 13
-#define BUTTONPIN15 12
 
-#define SMALLBUTTON0 7
-#define SMALLBUTTON1 6
-#define SMALLBUTTON2 5
-#define SMALLBUTTON3 4
-#define SMALLBUTTON4 3
-#define SMALLBUTTON5 2
-#define SMALLBUTTON6 1
+#define BUTTONPIN0  0 
+#define BUTTONPIN1  4 
+#define BUTTONPIN2  8 
+#define BUTTONPIN3  12 
+#define BUTTONPIN4  1 
+#define BUTTONPIN5  5
+#define BUTTONPIN6  9 
+#define BUTTONPIN7  13 
+#define BUTTONPIN8  2 
+#define BUTTONPIN9  6 
+#define BUTTONPIN10 10 
+#define BUTTONPIN11 14
+#define BUTTONPIN12 3 
+#define BUTTONPIN13 7
+#define BUTTONPIN14 11 
+#define BUTTONPIN15 15
 
-#define ENCODERBUTTON1 14
-#define ENCODERBUTTON2 15
+#define SMALLBUTTON0 9
+#define SMALLBUTTON1 2
+#define SMALLBUTTON2 1
+#define SMALLBUTTON3 5
+#define SMALLBUTTON4 0
+#define SMALLBUTTON5 4
+#define SMALLBUTTON6 8
+#define SMALLBUTTON7 6
+#define SMALLBUTTON8 10
+
+
+#define ENCODERBUTTON1 12
+
 
 BounceMcp buttons[16] = {};
-BounceMcp smallButtons[7] = {};
-BounceMcp encoderButtons[2] = {};
+BounceMcp smallButtons[9] = {};
+BounceMcp encoderButtons[1] = {};
 
 Adafruit_MCP23017 mcp0;
 Adafruit_MCP23017 mcp1;
 
 // Encoder Stuff
-#define ENCODER1LEFTPIN 2
-#define ENCODER1RIGHTPIN 3
-#define ENCODER2LEFTPIN 16
-#define ENCODER2RIGHTPIN 17
+#define ENCODER1LEFTPIN 17
+#define ENCODER1RIGHTPIN 16
+//#define ENCODER2LEFTPIN 16
+//#define ENCODER2RIGHTPIN 17
 Encoder knob1(ENCODER1LEFTPIN, ENCODER1RIGHTPIN);
-Encoder knob2(ENCODER2LEFTPIN, ENCODER2RIGHTPIN);
+//Encoder knob2(ENCODER2LEFTPIN, ENCODER2RIGHTPIN);
 
 // Encoder vars
 int32_t knob1Buffer = 0;
-int32_t knob2Buffer = 0;
+//int32_t knob2Buffer = 0;
 int32_t knob1InitValue = 0;
-int32_t knob2InitValue = 0;
+//int32_t knob2InitValue = 0;
 int32_t knob1previousValue = 0;
-int32_t knob2previousValue = 0;
+//int32_t knob2previousValue = 0;
 int16_t stepModeBuffer;
 int16_t pitchBuffer;
 int16_t gateLengthBuffer;
@@ -60,21 +64,24 @@ int8_t  gateTypeBuffer;
 
 void buttonSetup() {
   Serial.println("button setup start");
+  delay(10);
 
-  mcp0.begin(3);      // use default address 0
+  mcp0.begin(0);      // use default address 0
   delay(10);
 
   mcp1.begin(1);
   delay(10);
+
   Serial.println("button setup start 2");
 
   for (int i = 0; i<16; i++) {
-    mcp0.pinMode(i, INPUT);
-    mcp0.pullUp(i, HIGH);  // turn on a 100K pullup internally
-    mcp1.pinMode(i, INPUT);
-    mcp1.pullUp(i, HIGH);  // turn on a 100K pullup internally
-  }
-  Serial.println("button setup start");
+   mcp0.pinMode(i, INPUT);
+   mcp0.pullUp(i, HIGH);  // turn on a 100K pullup internally
+   mcp1.pinMode(i, INPUT);
+   mcp1.pullUp(i, HIGH);  // turn on a 100K pullup internally
+ }
+
+  Serial.println("button setup start 3");
 
   buttons[0].attach(mcp0, BUTTONPIN0,   0 ); 
   buttons[1].attach(mcp0, BUTTONPIN1,   0 ); 
@@ -100,10 +107,10 @@ void buttonSetup() {
   smallButtons[4].attach(mcp1, SMALLBUTTON4,  5 ); 
   smallButtons[5].attach(mcp1, SMALLBUTTON5,  5 ); 
   smallButtons[6].attach(mcp1, SMALLBUTTON6,  5 ); 
-
+  
   encoderButtons[0].attach(mcp1, ENCODERBUTTON1,  5 ); 
-  encoderButtons[1].attach(mcp1, ENCODERBUTTON2,  5 );
-
+// encoderButtons[1].attach(mcp1, ENCODERBUTTON2,  5 );
+//
   Serial.println("button setup end");
 
 }
@@ -142,52 +149,41 @@ void buttonLoop(){
 
 void encoderLoop(){
   knob1Buffer = knob1.read()/-4;
-  knob2Buffer = knob2.read()/-4;
+ // knob2Buffer = knob2.read()/-4;
 
   if (knob1Buffer != knob1previousValue) {
     // knob 1 has changed!
-
     knob1previousValue = knob1Buffer;
-   // filter1.frequency(knob1Buffer);
-    selectedSequence = positive_modulo(knob1Buffer, sequenceCount);
-    Serial.println("setting selectedSequence: " + String(selectedSequence));
-
-  }
-
-
-  if (knob2Buffer != knob2previousValue) {
-    // knob 1 has changed!
-    knob2previousValue = knob2Buffer;
-
     switch (settingMode) {
       case 0: // step mode
         switch (stepMode) {
           case 0:
           // just change the note
-            if (knob2Buffer + sequence[selectedSequence].getStepPitch(selectedStep) < 0){
+            if (knob1Buffer + sequence[selectedSequence].getStepPitch(selectedStep) < 0){
               // you can turn off a note by turning the value to 0
               // turn off a note by setting gate type and pitch to 0 
               sequence[selectedSequence].stepData[selectedStep].gateType = 0;
               sequence[selectedSequence].setStepPitch(selectedStep, 0);
-            } else {
+              knob1.write(4);  
+              } else {
               if(sequence[selectedSequence].stepData[selectedStep].gateType == 0){
                 // if a note is not active, turn it on.
                 sequence[selectedSequence].stepData[selectedStep].gateType = 1; 
               } 
               // and finally set the new step value!
-              sequence[selectedSequence].setStepPitch(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 127));
+              sequence[selectedSequence].setStepPitch(selectedStep, positive_modulo(stepModeBuffer + knob1Buffer, 127));
             }
             break;
 
           case 1:
           // change the gate type
-            sequence[selectedSequence].setGateLength(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 127) );
+            sequence[selectedSequence].setGateLength(selectedStep, positive_modulo(stepModeBuffer + knob1Buffer, 127) );
 
             break;
 
           case 2:  
           // change length of gate
-            sequence[selectedSequence].setGateType(selectedStep, positive_modulo(stepModeBuffer + knob2Buffer, 3) );
+            sequence[selectedSequence].setGateType(selectedStep, positive_modulo(stepModeBuffer + knob1Buffer, 3) );
             break;
 
           case 3:
@@ -202,15 +198,29 @@ void encoderLoop(){
       case SEQUENCE_SPED: // speed setting
         switch(menuSelection){
           case 0:
-            sequence[selectedSequence].setStepCount( positive_modulo(stepModeBuffer + knob2Buffer, 63)+1 );
+            sequence[selectedSequence].setStepCount( positive_modulo(stepModeBuffer + knob1Buffer, 63)+1 );
             break;
           case 1: 
-            sequence[selectedSequence].setBeatCount( positive_modulo(stepModeBuffer + knob2Buffer, 127) + 1 );
+            sequence[selectedSequence].setBeatCount( positive_modulo(stepModeBuffer + knob1Buffer, 127) + 1 );
             break;
         }
         break;
       }
-    }
+
+
+
+  }
+
+/*
+  if (knob2Buffer != knob2previousValue) {
+    // knob 1 has changed!
+    knob2previousValue = knob2Buffer;
+   // filter1.frequency(knob1Buffer);
+    selectedSequence = positive_modulo(knob2Buffer, sequenceCount);
+    Serial.println("setting selectedSequence: " + String(selectedSequence));
+
+
+  } */
 }
 
 void matrixButtonLoop(){
@@ -329,7 +339,15 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
 
       settingMode = 0;
       break;
+   
+    case SEQUENCE_SELECT:
+
+      selectedSequence = buttonNum;
+      Serial.println("setting selectedSequence: " + String(selectedSequence));
+      settingMode = 0;
+      break;
    }
+
 };
 
 
@@ -413,18 +431,18 @@ void stepModeButtonHandler(uint8_t i){
   saveTimer = 0;
   if(selectedStep == i && stepMode == 0){
     stepMode = 1; // change the step length
-    knob2.write(0);
+    knob1.write(0);
     stepModeBuffer = sequence[selectedSequence].stepData[i].gateLength;
   } else if (selectedStep == i && stepMode != 0){
     stepMode = positive_modulo(stepMode + 1, 3); // change the step length
-    knob2.write(0);
+    knob1.write(0);
     stepModeBuffer = sequence[selectedSequence].stepData[i].gateType;
   } else {
     stepMode = 0;
     selectedStep = i;
     // since the selected step changed, we need to reset the knob2 value to 0
-    knob2.write(0);
-    knob2previousValue = 0;
+    knob1.write(0);
+    knob1previousValue = 0;
     stepModeBuffer = sequence[selectedSequence].getStepPitch(selectedStep);
   }
 }
@@ -433,13 +451,21 @@ void stepModeButtonHandler(uint8_t i){
 
 
 void smallButtonLoop(){
-  for (int i=0; i <7; i++){
+  for (int i=0; i <9; i++){
     smallButtons[i].update();
-
     if (smallButtons[i].fell()){
+          Serial.println("button fell " + String(i));
+
       switch (i){
         // left row bottom up
         case 0:
+          if (settingMode == PATTERN_SELECT){
+            stepMode = 0;
+            settingMode = 0;
+          } else {
+            stepMode = 4; 
+            settingMode = PATTERN_SELECT;
+          }
           break;
 
         case 1:
@@ -456,14 +482,10 @@ void smallButtonLoop(){
           break;
 
         case 4:
-          if (settingMode == PATTERN_SELECT){
-            stepMode = 0;
-            settingMode = 0;
-          } else {
-            stepMode = 4; 
-            settingMode = PATTERN_SELECT;
+          playing = false;
+          for(int s; s < sequenceCount; s++){
+            sequence[s].activeStep = 0;
           }
-  
           break;
 
         // right two, bottom up
@@ -472,7 +494,13 @@ void smallButtonLoop(){
           break;
 
         case 6:
-          break;
+         if (settingMode == SEQUENCE_SELECT){
+            stepMode = 0;
+            settingMode = 0;
+          } else {
+            stepMode = 4; 
+            settingMode = SEQUENCE_SELECT;
+          }          break;
 
       }
     }
