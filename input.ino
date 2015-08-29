@@ -341,10 +341,11 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
       break;
    
     case SEQUENCE_SELECT:
-
-      selectedSequence = buttonNum;
-      Serial.println("setting selectedSequence: " + String(selectedSequence));
-      settingMode = 0;
+      if (buttonNum < sequenceCount){
+        selectedSequence = buttonNum;
+        Serial.println("setting selectedSequence: " + String(selectedSequence));
+        settingMode = 0;
+      }
       break;
    }
 

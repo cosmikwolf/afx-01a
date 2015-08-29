@@ -122,7 +122,7 @@ elapsedMicros runTimer = 0;
 String activeSection;
 // Lets Begin!
 
-uint8_t sequenceCount = 2;
+uint8_t sequenceCount = 4;
 
 Sequencer sequence[2];
 NoteDatum noteData[2];
