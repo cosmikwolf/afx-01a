@@ -364,7 +364,7 @@ void sequencerMenuButtonHandler(uint8_t buttonId){
       settingMode = SEQUENCE_TRAN;
       break;
     case 3:
-      settingMode = SEQUENCE_LENG;
+      settingMode = SEQUENCE_INST;
       break;
     case 4:
       settingMode = SEQUENCE_QUAN;
@@ -494,13 +494,7 @@ void smallButtonLoop(){
           break;
 
         case 6:
-         if (settingMode == SEQUENCE_SELECT){
-            stepMode = 0;
-            settingMode = 0;
-          } else {
-            stepMode = 4; 
-            settingMode = SEQUENCE_SELECT;
-          }          break;
+          break;
 
       }
     }
@@ -512,11 +506,15 @@ void smallButtonLoop(){
 }
 
 void encoderButtonLoop(){
-  for (int i=0; i <2; i++){
-    encoderButtons[i].update();
-    if (encoderButtons[i].read() == LOW){
-
-    }
+  encoderButtons[0].update();
+  if ( encoderButtons[0].fell() ){
+    if (settingMode == SEQUENCE_SELECT){
+      stepMode = 0;
+      settingMode = 0;
+    } else {
+      stepMode = 4; 
+      settingMode = SEQUENCE_SELECT;
+    }  
   }
 }
 

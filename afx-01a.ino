@@ -9,15 +9,15 @@
 #include "Sequencer.h"
 #include <MIDI.h>
 #include "NoteDatum.h"
-#include <EEPROM.h>
-#include "EEPROMAnything.h"
+//#include <EEPROM.h>
+//#include "EEPROMAnything.h"
 #include "Zetaohm_SAM2695.h"
 
 //#define SEQUENCE_GENE  64
 #define SEQUENCE_NAME   65
 #define SEQUENCE_SPED   66
 #define SEQUENCE_TRAN   67
-#define SEQUENCE_LENG   68
+#define SEQUENCE_INST   68
 #define SEQUENCE_QUAN   69
 #define SEQUENCE_EUCL   70
 #define SEQUENCE_GENE   71 
@@ -50,6 +50,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, NEOPIXELPIN, NEO_RGB + N
 Adafruit_SSD1306 display(OLED_RESET); //i2c instantiation 
 
 Zetaohm_SAM2695 sam2695;
+
+File saveData;
 
 float midiFreq[128] = { 8.17, 8.66, 9.17, 9.72, 10.30, 10.91, 11.56, 12.24, 12.97, 13.75, 14.56, 15.43, 16.35, 17.32, 18.35,
  19.44, 20.60, 21.82, 23.12, 24.49, 25.95, 27.50, 29.13, 30.86, 32.70, 34.64, 36.70, 38.89, 41.20, 43.65, 46.24, 48.99, 51.91,
@@ -167,21 +169,25 @@ void setup(){
   delay(2000);
 
   Serial.begin(57600);
-  Serial.println("Begin Setup Sequence");
+  Serial.println("Initializing SPI");
   SPI.setMOSI(11);
   SPI.setSCK(13);
-  Serial.println("Begin Setup Sequence 2");
+  Serial.println("Initializing MIDI");
   MIDI.begin(MIDI_CHANNEL_OMNI);
   midiSetup();
-  Serial.println("Begin Setup Sequence 4");
+  Serial.println("Initializing Neopixels");
   pixels.begin();
   pixels.setBrightness(45);
-  Serial.println("Begin Setup Sequence 5");
+  Serial.println("Initializing Display");
   
   displayStartup();
 
-  Serial.println("Begin Setup Sequence 6");
+  Serial.println("Initializing Input Buttons");
   buttonSetup();  
+  Serial.println("Initializing SD Card save file");
+  initializeFlashMemory();
+
+  Serial.println("Initializing SAM2695");
 
   sam2695.programChange(0, 0, 90);       // give our two channels different voices
   sam2695.programChange(0, 1, 89);
@@ -195,9 +201,9 @@ void setup(){
  // Serial.println("reading EEPROM..." + String(micros()));
   // EEPROM.update(0, 0xff);
  // loadPattern(0);
-  Serial.println("done reading..." + String(micros()));
-  Serial.println("read 0" + String(EEPROM.read(0)));
-  Serial.println("Begin Sequence Object Initialization");
+  //Serial.println("done reading..." + String(micros()));
+  //Serial.println("read 0" + String(EEPROM.read(0)));
+  Serial.println("Initializing Sequence Objects");
 
   //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
   sequence[0].initialize(1, 16, 4, tempo);
@@ -222,6 +228,7 @@ void setup(){
   Serial.println("Beginning MIDI Clock");
   midiClockSync.begin(midiClockSyncFunc, midiClockInterval);
 //
+
   Serial.println("newFreeRam: " + String(newFreeRam()));
 
   Serial.println("Setup Complete");

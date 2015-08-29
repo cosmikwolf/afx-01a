@@ -223,7 +223,7 @@ void sequenceMenuDisplay(){
   display.print("NAME ");
   display.print("SPED ");
   display.print("TRAN ");
-  display.print("LENG ");
+  display.print("INST ");
   display.setCursor(7,33);
   display.print("QUAN ");
   display.print("EUCL ");
@@ -262,7 +262,7 @@ void globalMenuDisplay(){
 }
 
 void stepDisplay(){
-
+// MAIN STEP DISPLAY 
 
 //  display.drawTriangle( 120,0,
 //                          113,9,
@@ -339,6 +339,27 @@ void stepDisplay(){
       display.setTextColor(WHITE);
 
 
+      if (playing) {
+        display.fillTriangle(
+          105,5,
+          105,25,
+          125,15,
+          WHITE
+          );
+      } else {
+        display.fillRoundRect(
+          105,5,
+          8, 20,
+          0, WHITE
+          );
+        display.fillRoundRect(
+          117,5,
+          8, 20,
+          0, WHITE
+          );
+      }
+
+
   display.setCursor(0,24);
 
   if (stepMode == 3){
@@ -354,7 +375,7 @@ void stepDisplay(){
  // display.println("millis: " + String(millis()));
   //display.println("activeSection: " + activeSection);
 
-display.println("Playing: " + String(playing));
+//display.println("Playing: " + String(playing));
  // display.println("Peak: " + String(peak1.read()) + " 2: " + String(peak2.read()));
  // display.println("CPU:" + String(AudioProcessorUsage()) + " MAX:" + String(AudioProcessorUsageMax()));
  // display.println("MEM:" + String(AudioMemoryUsage()) + " MAX:" + String(AudioMemoryUsageMax()));
