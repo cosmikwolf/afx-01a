@@ -1,16 +1,12 @@
 #include <SPI.h>
 #include <SD.h>
-//#include <Audio.h>
 #include <i2c_t3.h>
-//#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_NeoPixel.h>
 #include "Sequencer.h"
 #include <MIDI.h>
 #include "NoteDatum.h"
-//#include <EEPROM.h>
-//#include "EEPROMAnything.h"
 #include "Zetaohm_SAM2695.h"
 
 //#define SEQUENCE_GENE  64
@@ -189,11 +185,15 @@ void setup(){
 
   Serial.println("Initializing SAM2695");
 
-  sam2695.programChange(0, 0, 90);       // give our two channels different voices
-  sam2695.programChange(0, 1, 89);
+  sam2695.programChange(0, 0, 29);       // give our two channels different voices
+  sam2695.programChange(0, 1, 30);
+  sam2695.programChange(0, 2, 128);       // give our two channels different voices
+  sam2695.programChange(0, 3, 29);
 
   sam2695.setChannelVolume(0, 64);     // set their volumes
   sam2695.setChannelVolume(1, 64);
+  sam2695.setChannelVolume(2, 64);     // set their volumes
+  sam2695.setChannelVolume(3, 64);
 
   Serial.println("Initializing Sequence Objects");
 

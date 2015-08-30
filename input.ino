@@ -31,9 +31,7 @@
 #define SMALLBUTTON7 6
 #define SMALLBUTTON8 10
 
-
 #define ENCODERBUTTON1 12
-
 
 BounceMcp buttons[16] = {};
 BounceMcp smallButtons[9] = {};
@@ -205,7 +203,16 @@ void encoderLoop(){
             break;
         }
         break;
+      case SEQUENCE_INST:
+          int instBuffer = sequence[selectedSequence].instrument;
+          sequence[selectedSequence].instrument = positive_modulo(knob1Buffer,127);
+          sam2695.programChange(0, selectedSequence, sequence[selectedSequence].instrument);
+
+        break;
+
+
       }
+
 
 
 
@@ -347,6 +354,8 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
         settingMode = 0;
       }
       break;
+
+
    }
 
 };
@@ -505,7 +514,7 @@ void smallButtonLoop(){
   if (smallButtons[0].fell()){
   }
 }
-
+ 
 void encoderButtonLoop(){
   encoderButtons[0].update();
   if ( encoderButtons[0].fell() ){

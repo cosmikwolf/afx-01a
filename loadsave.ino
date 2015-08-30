@@ -1,7 +1,7 @@
 void changePattern(uint8_t pattern, boolean saveFirst, boolean instant){
 	//Serial.println("currentPattern: " + String(currentPattern) + "\tsequenceCount: " + String(sequenceCount));
 	if(saveFirst){
-		saveCurrentPattern();
+		savePattern(currentPattern);
 	}
 
   if (instant || !playing) {
@@ -32,8 +32,8 @@ void initializeFlashMemory(){
 
   Serial.println("SD Card and save file initialization complete.");
 }
-
-void saveCurrentPattern() {
+ 
+void savePattern(uint8_t pattern) {
   Serial.println("Saving to SD Card - " + String(micros()));
   need2save = false;  
   saveData = SD.open("data.txt", FILE_WRITE);
@@ -41,7 +41,7 @@ void saveCurrentPattern() {
   for(int i=0; i < sequenceCount; i++){
 
  	  int index = int(
-    ( i  + currentPattern * sequenceCount ) 
+    ( i  + pattern * sequenceCount ) 
     * ( sizeof(sequence[0].stepData) 
       + sizeof(sequence[0].stepCount) 
       + sizeof(sequence[0].beatCount) 
@@ -78,7 +78,6 @@ void loadPattern(uint8_t pattern) {
   Serial.println("========= LOADING PATTERN: " + String(pattern)); 
   printPattern();
 
-  delay(10);
   saveData = SD.open("data.txt");
 
 	for(int i=0; i < sequenceCount; i++){
@@ -103,37 +102,36 @@ void loadPattern(uint8_t pattern) {
 
     saveData.seek(index);
     Serial.println("loading data");
-    saveData.read( (byte*)&sequence[i].stepData,    sizeof(sequence[i].stepData));
-    saveData.read( (byte*)&sequence[i].stepCount,   sizeof(sequence[i].stepCount));
-    saveData.read( (byte*)&sequence[i].beatCount,   sizeof(sequence[i].beatCount));
-    saveData.read( (byte*)&sequence[i].quantizeKey, sizeof(sequence[i].quantizeKey));
-    saveData.read( (byte*)&sequence[i].instrument,  sizeof(sequence[i].instrument));
-    saveData.read( (byte*)&sequence[i].instType,    sizeof(sequence[i].instType));
+    if (saveData.available()){
+      Serial.println("saveDataAvailable, loading sequence");
+      saveData.read( (byte*)&sequence[i].stepData,    sizeof(sequence[i].stepData));
+      saveData.read( (byte*)&sequence[i].stepCount,   sizeof(sequence[i].stepCount));
+      saveData.read( (byte*)&sequence[i].beatCount,   sizeof(sequence[i].beatCount));
+      saveData.read( (byte*)&sequence[i].quantizeKey, sizeof(sequence[i].quantizeKey));
+      saveData.read( (byte*)&sequence[i].instrument,  sizeof(sequence[i].instrument));
+      saveData.read( (byte*)&sequence[i].instType,    sizeof(sequence[i].instType));
+
+    } else {
+      Serial.println("saveData not available, initializing sequence");
+      sequence[i].initNewSequence();
+    }
     Serial.println("reading complete!");
     
     // if no steps are set, it is an empty sequence. initialize a new default sequence.
-    if (sequence[i].instType == 0 ) {
-      Serial.println("###### INITIALIZING NEW SEQUENCE ######");
-      sequence[i].initNewSequence();
-    } else {
-      Serial.println("###### sequence already exists instType: " + String(sequence[i].instType));
-
-    }
+  // if (sequence[i].instType == 0 ) {
+  //   Serial.println("###### INITIALIZING NEW SEQUENCE ######");
+  //   sequence[i].initNewSequence();
+  // } else {
+  //   Serial.println("###### sequence already exists instType: " + String(sequence[i].instType));//
+  // }
 
 
   }
   Serial.println("closing file handle");
-  delay(30);
   saveData.close();
-
   Serial.println("file handle closed");
-  delay(30);
   Serial.println("changing current pattern from " + String(currentPattern) + " to " + String(pattern) + " and also this is queuePattern: " + String(queuePattern));
-    delay(30);
-
   currentPattern = pattern;
-  delay(30);
-
   Serial.println("Pattern " + String(pattern) + " loaded");
   printPattern();
 }
@@ -176,7 +174,7 @@ void printDirectory(File dir, int numTabs) {
 void printPattern(){
   Serial.println("Printing Data for pattern: " + String(currentPattern));
   for(int i=0; i < sequenceCount; i++){
-    Serial.print("sc:\t"+String(sequence[i].stepCount) +"\tbc:\t"+String(sequence[i].beatCount) +"\tqk:\t"+String(sequence[i].quantizeKey) + "\t");
+    Serial.print("sc:\t"+String(sequence[i].stepCount) +"\tbc:\t"+String(sequence[i].beatCount) +"\tqk:\t"+String(sequence[i].quantizeKey)+"\tinst:\t"+String(sequence[i].instrument)+"\tit:\t"+String(sequence[i].instType) + "\t");
     for(int n=0; n<16; n++){
       Serial.print( String(sequence[i].stepData[n].pitch) + "\t" );
     }

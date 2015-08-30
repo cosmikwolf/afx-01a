@@ -187,6 +187,16 @@ void menuItem(uint8_t menuItem){
       
       break;
 
+    case SEQUENCE_INST:
+      display.setTextColor(WHITE);
+      display.setCursor(0,1);
+      display.setTextSize(1);
+      display.println("Instrument Select");
+      display.setCursor(0,20);
+      display.print("Instrument: ");
+      display.setTextColor(BLACK, WHITE);
+      display.print(String(sequence[selectedSequence].instrument));
+      break;
  //   case SEQUENCE_TRAN:
  //     nonBlockingRainbow(2, generatorSkip, 13 );
  //     display.setTextColor(WHITE);
@@ -382,5 +392,6 @@ void stepDisplay(){
 //  display.println(F("avgPeriod:") + String(avgPeriod));
  // display.println(F("avgLoopTime:") + String(avgLoopTime));
 //  display.println(F("avgRuntime:") + String(avgRuntime));
+  display.println("inst: " + String(sequence[selectedSequence].instrument));
 display.println("millis: " + String(millis()));
 }
