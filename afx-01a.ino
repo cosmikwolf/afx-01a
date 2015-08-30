@@ -124,8 +124,8 @@ String activeSection;
 
 uint8_t sequenceCount = 4;
 
-Sequencer sequence[2];
-NoteDatum noteData[2];
+Sequencer sequence[4];
+NoteDatum noteData[4];
 
 boolean need2save = false;
 elapsedMicros saveTimer;
@@ -166,7 +166,7 @@ uint8_t queuePattern = 0;
 
 void setup(){
   // delay here to allow power to be established before starting all the devices.
-  delay(2000);
+  delay(4000);
 
   Serial.begin(57600);
   Serial.println("Initializing SPI");
@@ -194,20 +194,14 @@ void setup(){
 
   sam2695.setChannelVolume(0, 64);     // set their volumes
   sam2695.setChannelVolume(1, 64);
-  // audioSetup();
- // Serial.println("testing eeprom");
- // Serial.println("Length: " + String(EEPROM.length()));
- // Serial.println("read 0" + String(EEPROM.read(0)));
- // Serial.println("reading EEPROM..." + String(micros()));
-  // EEPROM.update(0, 0xff);
- // loadPattern(0);
-  //Serial.println("done reading..." + String(micros()));
-  //Serial.println("read 0" + String(EEPROM.read(0)));
+
   Serial.println("Initializing Sequence Objects");
 
   //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
   sequence[0].initialize(1, 16, 4, tempo);
   sequence[1].initialize(2, 16, 4, tempo);
+  sequence[2].initialize(3, 16, 4, tempo);
+  sequence[3].initialize(4, 16, 4, tempo);
 
   Serial.println("Sequence Object Initialization Complete");
   Serial.println("sizeof midiNotes:" + String(sizeof(midiNotes)));
@@ -227,10 +221,10 @@ void setup(){
   masterClock.begin(masterClockFunc,masterClockInterval);
   Serial.println("Beginning MIDI Clock");
   midiClockSync.begin(midiClockSyncFunc, midiClockInterval);
-//
-
   Serial.println("newFreeRam: " + String(newFreeRam()));
 
+  Serial.println("load pattern 0");
+  loadPattern(0);
   Serial.println("Setup Complete");
   
 

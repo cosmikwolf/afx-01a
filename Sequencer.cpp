@@ -12,6 +12,8 @@ void Sequencer::initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount, flo
 	this->tempo = tempo;
 	this->stepTimer = 0;
 	this->sequenceTimer = 0;
+  this->instrument = 0;
+  this->instType = 0;
 	//for (int i=0; i < 16; i++){
   //  stepData[i].gateLength = 1;
   //  stepData[i].velocity = 127;
@@ -21,6 +23,23 @@ void Sequencer::initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount, flo
   calculateStepTimers();
   monophonic = true;
 };	
+
+
+void Sequencer::initNewSequence(){
+  stepCount = 16;
+  beatCount = 4;
+  quantizeKey = 0;
+  instrument = 0;
+  instType = 1; //initialized regular instrument
+  for(int n=0; n < 16; n++){
+    stepData[n].pitch      = 0;
+    stepData[n].gateLength = 1;
+    stepData[n].gateType   = 0;
+    stepData[n].velocity   = 127;
+    stepData[n].glide      = 0;
+  }
+};
+
 
 void Sequencer::setTempo(uint16_t tempo){
   this->tempo = tempo;
@@ -85,6 +104,7 @@ void Sequencer::calculateStepTimers(){
 
   
 }
+
 
 void Sequencer::clockStart(elapsedMicros startTime){
   firstBeat = true;

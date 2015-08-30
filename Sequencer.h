@@ -22,6 +22,7 @@ class Sequencer
 		int  positive_modulo(int i, int n);
 		void setStepCount(uint8_t stepCountNew);
 		void setBeatCount(uint16_t beatCountNew);
+		void initNewSequence();
 		uint8_t  quantizePitch(uint8_t note, uint32_t scale, bool direction);
 		uint8_t  getStepPitch(uint8_t step);
 		boolean  monophonic;
@@ -46,6 +47,8 @@ class Sequencer
 		uint8_t	 quantizeKey;
 		uint8_t  stepCount;  		// sequence length in 1/16th notes]
 		uint16_t beatCount;
+		uint8_t	 instrument;
+		uint8_t	 instType;
 
 		struct StepDatum {
 			// data that needs to be stored

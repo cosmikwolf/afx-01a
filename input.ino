@@ -484,7 +484,7 @@ void smallButtonLoop(){
 
         case 4:
           playing = false;
-          for(int s; s < sequenceCount; s++){
+          for(int s = 0; s < sequenceCount; s++){
             sequence[s].activeStep = 0;
           }
           break;
