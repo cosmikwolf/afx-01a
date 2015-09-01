@@ -495,6 +495,7 @@ void smallButtonLoop(){
           playing = false;
           for(int s = 0; s < sequenceCount; s++){
             sequence[s].activeStep = 0;
+            sam2695.allNotesOff(s);
           }
           break;
 

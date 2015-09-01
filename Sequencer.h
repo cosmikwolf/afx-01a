@@ -47,7 +47,7 @@ class Sequencer
 		uint8_t	 quantizeKey;
 		uint8_t  stepCount;  		// sequence length in 1/16th notes]
 		uint16_t beatCount;
-		uint8_t	 instrument;
+		uint16_t instrument;
 		uint8_t	 instType;
 
 		struct StepDatum {

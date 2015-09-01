@@ -193,9 +193,8 @@ void menuItem(uint8_t menuItem){
       display.setTextSize(1);
       display.println("Instrument Select");
       display.setCursor(0,20);
-      display.print("Instrument: ");
       display.setTextColor(BLACK, WHITE);
-      display.print(String(sequence[selectedSequence].instrument));
+      display.print(instrumentNames[sequence[selectedSequence].instrument] );
       break;
  //   case SEQUENCE_TRAN:
  //     nonBlockingRainbow(2, generatorSkip, 13 );
