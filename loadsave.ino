@@ -93,27 +93,27 @@ void loadPattern(uint8_t pattern) {
     ));
     Serial.println("seeking to index: " + String(index) + " for sequence " + String(i) + "\t\tfileSize: " + saveData.size());
     
-    Serial.println("stepData size: \t" + String(sizeof(sequence[i].stepData)) );
-    Serial.println("stepCount size: \t" + String(sizeof(sequence[i].stepCount)));
-    Serial.println("beatCount size: \t" + String(sizeof(sequence[i].beatCount)) );
-    Serial.println("quantizeKey size: \t" + String(sizeof(sequence[i].quantizeKey) ));
-    Serial.println("instrument size: \t" + String(sizeof(sequence[i].instrument) ));
-    Serial.println("instType size: \t" + String(sizeof(sequence[i].instType) ));
+  //  Serial.println("stepData size: \t" + String(sizeof(sequence[i].stepData)) );
+  //  Serial.println("stepCount size: \t" + String(sizeof(sequence[i].stepCount)));
+  //  Serial.println("beatCount size: \t" + String(sizeof(sequence[i].beatCount)) );
+  //  Serial.println("quantizeKey size: \t" + String(sizeof(sequence[i].quantizeKey) ));
+  //  Serial.println("instrument size: \t" + String(sizeof(sequence[i].instrument) ));
+  //  Serial.println("instType size: \t" + String(sizeof(sequence[i].instType) ));
 
     saveData.seek(index);
     Serial.println("loading data");
-    if (saveData.available()){
-      Serial.println("saveDataAvailable, loading sequence");
-      saveData.read( (byte*)&sequence[i].stepData,    sizeof(sequence[i].stepData));
-      saveData.read( (byte*)&sequence[i].stepCount,   sizeof(sequence[i].stepCount));
-      saveData.read( (byte*)&sequence[i].beatCount,   sizeof(sequence[i].beatCount));
-      saveData.read( (byte*)&sequence[i].quantizeKey, sizeof(sequence[i].quantizeKey));
-      saveData.read( (byte*)&sequence[i].instrument,  sizeof(sequence[i].instrument));
-      saveData.read( (byte*)&sequence[i].instType,    sizeof(sequence[i].instType));
+    saveData.read( (byte*)&sequence[i].stepData,    sizeof(sequence[i].stepData));
+    saveData.read( (byte*)&sequence[i].stepCount,   sizeof(sequence[i].stepCount));
+    saveData.read( (byte*)&sequence[i].beatCount,   sizeof(sequence[i].beatCount));
+    saveData.read( (byte*)&sequence[i].quantizeKey, sizeof(sequence[i].quantizeKey));
+    saveData.read( (byte*)&sequence[i].instrument,  sizeof(sequence[i].instrument));
+    saveData.read( (byte*)&sequence[i].instType,    sizeof(sequence[i].instType));
 
-    } else {
+    if (sequence[i].instType == 0 || saveData.size() <= index){
       Serial.println("saveData not available, initializing sequence");
       sequence[i].initNewSequence();
+    } else {
+      Serial.println("saveDataAvailable, loading sequence --- instType: " + String(sequence[i].instType));
     }
     Serial.println("reading complete!");
     

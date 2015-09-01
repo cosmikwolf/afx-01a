@@ -30,7 +30,7 @@ void Sequencer::initNewSequence(){
   beatCount = 4;
   quantizeKey = 0;
   instrument = 0;
-  instType = 1; //initialized regular instrument
+  instType = 2; //initialized regular instrument
   for(int n=0; n < 16; n++){
     stepData[n].pitch      = 0;
     stepData[n].gateLength = 1;

@@ -137,17 +137,17 @@ void masterClockFunc(){
       //    
       //  avgDelta = (delta + roundTripTime+ 9*avgDelta)/10;
 
-      //  Serial.println(
-      //    "noteOn: " + String(noteData[i].noteOnArray[n]) 
-      //    + "\tbt: " + String(sequence[selectedSequence].beatTracker) 
-      //    + "\tch: " + String(noteData[i].channel)
-      //    + "\tseq: " + String(noteData[i].sequenceTime)
-      //    + "\toff: " + String(noteData[i].offset)
-      //    + "\tdelta: " + String(delta) 
-      //    + "\trtt: " + String(roundTripTime)
-      //    + "\ttot: " + String(delta+roundTripTime)
-      //    + "\tavgDelta: " + String(avgDelta) 
-      //    + "\tstartTime: " + String(startTime));
+        Serial.println(
+          "noteOn: " + String(noteData[i].noteOnArray[n]) 
+          + "\tbt: " + String(sequence[selectedSequence].beatTracker) 
+          + "\tch: " + String(noteData[i].channel)
+          + "\tseq: " + String(noteData[i].sequenceTime)
+          + "\toff: " + String(noteData[i].offset)
+    //      + "\tdelta: " + String(delta) 
+    //      + "\trtt: " + String(roundTripTime)
+     //     + "\ttot: " + String(delta+roundTripTime)
+    //      + "\tavgDelta: " + String(avgDelta) 
+          + "\tstartTime: " + String(startTime));
         }
       }
     }

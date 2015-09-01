@@ -198,10 +198,10 @@ void setup(){
   Serial.println("Initializing Sequence Objects");
 
   //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
-  sequence[0].initialize(1, 16, 4, tempo);
-  sequence[1].initialize(2, 16, 4, tempo);
-  sequence[2].initialize(3, 16, 4, tempo);
-  sequence[3].initialize(4, 16, 4, tempo);
+  sequence[0].initialize(0, 16, 4, tempo);
+  sequence[1].initialize(1, 16, 4, tempo);
+  sequence[2].initialize(2, 16, 4, tempo);
+  sequence[3].initialize(3, 16, 4, tempo);
 
   Serial.println("Sequence Object Initialization Complete");
   Serial.println("sizeof midiNotes:" + String(sizeof(midiNotes)));
