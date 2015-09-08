@@ -21,7 +21,7 @@ void initializeFlashMemory(){
     Serial.println("SD Card initialization failed!");
     return;
   }
-    SD.remove("data.txt");
+  //SD.remove("data.txt");
   if (SD.exists("data.txt")) {
     Serial.println("data.txt exists.");
   } else {
@@ -33,6 +33,13 @@ void initializeFlashMemory(){
   Serial.println("SD Card and save file initialization complete.");
 }
  
+
+ void deleteSaveFile(){
+  Serial.println("Deleting Save File");
+  SD.remove("data.txt");
+  loadPattern(0);
+ }
+
 void savePattern(uint8_t pattern) {
   Serial.println("Saving to SD Card - " + String(micros()));
   need2save = false;  

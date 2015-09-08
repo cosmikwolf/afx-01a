@@ -315,6 +315,10 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
           };
           settingMode = 0;
           break;
+        case 12:
+          deleteSaveFile();
+          settingMode = 0;
+        break;  
       }
       break;
 
