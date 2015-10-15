@@ -49,7 +49,9 @@ class Sequencer
 		uint16_t beatCount;
 		uint16_t instrument;
 		uint8_t	 instType;
-
+		uint8_t  volume;
+		uint8_t  bank;
+		
 		struct StepDatum {
 			// data that needs to be stored
 			uint8_t			pitch;		    // note pitch

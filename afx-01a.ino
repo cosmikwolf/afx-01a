@@ -1,4 +1,5 @@
 #include <SPI.h>
+//#include <spi4teensy3.h>
 #include <SD.h>
 #include <i2c_t3.h>
 #include <Adafruit_GFX.h>
@@ -8,6 +9,7 @@
 #include <MIDI.h>
 #include "NoteDatum.h"
 #include "Zetaohm_SAM2695.h"
+#include "Zetaohm_AD5676.h"
 
 //#define SEQUENCE_GENE  64
 #define SEQUENCE_NAME   65
@@ -44,9 +46,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, NEOPIXELPIN, NEO_RGB + N
 #define OLED_RESET    5 
 //Adafruit_SSD1306 display(OLED_DC, OLED_RESET, OLED_CS);
 Adafruit_SSD1306 display(OLED_RESET); //i2c instantiation 
-
 Zetaohm_SAM2695 sam2695;
-
+Zetaohm_AD5676 ad5676;
 File saveData;
 
 float midiFreq[128] = { 8.17, 8.66, 9.17, 9.72, 10.30, 10.91, 11.56, 12.24, 12.97, 13.75, 14.56, 15.43, 16.35, 17.32, 18.35,
@@ -104,7 +105,8 @@ elapsedMicros internalClockTimer;
 elapsedMicros pixelTimer;
 elapsedMicros displayTimer;
 elapsedMicros startTime;
-uint32_t masterClockInterval = 2000;
+uint32_t masterClockInterval = 2100;
+uint32_t uiLoopInterval = 800;
 uint32_t midiClockInterval = 1000.0;
 uint8_t selectedSequence = 0;
 unsigned long lastRunTime = 0;
@@ -163,25 +165,32 @@ uint8_t queuePattern = 0;
 
 void setup(){
   // delay here to allow power to be established before starting all the devices.
-  delay(4000);
+  delay(1000);
 
   Serial.begin(57600);
+  
   Serial.println("Initializing SPI");
   SPI.setMOSI(11);
   SPI.setSCK(13);
+  
   Serial.println("Initializing MIDI");
   MIDI.begin(MIDI_CHANNEL_OMNI);
   midiSetup();
+  
   Serial.println("Initializing Neopixels");
   pixels.begin();
   pixels.setBrightness(45);
-  Serial.println("Initializing Display");
   
+  Serial.println("Initializing Display");
   displayStartup();
-
+  
   Serial.println("Initializing Input Buttons");
   buttonSetup();  
+  
+
   Serial.println("Initializing SD Card save file");
+  
+  //delay(1000);
   initializeFlashMemory();
 
   Serial.println("Initializing SAM2695");
@@ -191,11 +200,15 @@ void setup(){
   sam2695.programChange(0, 2, 128);       // give our two channels different voices
   sam2695.programChange(0, 3, 29);
 
-  sam2695.setChannelVolume(0, 64);     // set their volumes
-  sam2695.setChannelVolume(1, 64);
-  sam2695.setChannelVolume(2, 64);     // set their volumes
-  sam2695.setChannelVolume(3, 64);
+ // sam2695.setChannelVolume(0, 64);     // set their volumes
+ // sam2695.setChannelVolume(1, 64);
+ // sam2695.setChannelVolume(2, 64); 
+ // sam2695.setChannelVolume(3, 64);
+  Serial.println("Initializing AD5676 Octal DAC");
+  ad5676.begin(15,14);
+  ad5676.softwareReset();
 
+  ad5676.internalReferenceEnable(false);
   Serial.println("Initializing Sequence Objects");
 
   //initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount,uint8_t multiplier, uint8_t divider, uint16_t tempo);
@@ -222,28 +235,42 @@ void setup(){
   masterClock.begin(masterClockFunc,masterClockInterval);
   Serial.println("Beginning MIDI Clock");
   midiClockSync.begin(midiClockSyncFunc, midiClockInterval);
-  Serial.println("newFreeRam: " + String(newFreeRam()));
+  uiLoop.begin(uiLoopFunc, uiLoopInterval);
+ // Serial.println("newFreeRam: " + String(newFreeRam()));
 
   Serial.println("load pattern 0");
   loadPattern(0);
+  delay(1000);
+
   Serial.println("Setup Complete");
   
 
  }
 
 uint8_t uiLoopFuncMultiplexer = 0;
+elapsedMicros counter;
+
+void uiLoopFunc(){
+    float a = counter/10000.0;
+  uint16_t n = (sin(a)+1.0) * 32767.5;
+  //  ad5676.setVoltage(5, n);
+  for (int i=0; i<8; i++){
+    ad5676.setVoltage(i, n);
+  }
+
+}
 
 void loop(){
-
   //Serial.println("looping!");
  // encoderLoop(); // encoder loop is quick, so it will run each time.
   uiLoopFuncMultiplexer = (uiLoopFuncMultiplexer+1) % 3;
   noInterrupts();
  // if (need2save && saveTimer > 10000000) {
  // }
+
   switch (uiLoopFuncMultiplexer) {
     case 0:
-     buttonLoop();
+      buttonLoop();
       break;
 
     case 1:
@@ -254,10 +281,10 @@ void loop(){
       displayLoop();
       break;
   }
-  interrupts();
   
+  interrupts();
 }
-
+/*
 
 uint32_t newFreeRam() { // for Teensy 3.0
     uint32_t stackTop;
@@ -276,3 +303,4 @@ uint32_t newFreeRam() { // for Teensy 3.0
     return stackTop - heapTop;
 }
 
+*/

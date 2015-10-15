@@ -8,7 +8,7 @@ int color = 0;
 
 
 void displayStartup(){
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3D);  // initialize with the I2C addr 0x3D (for the 128x64)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
   display.clearDisplay();   // clears the screen and buffer
   display.display(); // show splashscreen
   display.setTextSize(4);
@@ -193,8 +193,22 @@ void menuItem(uint8_t menuItem){
       display.setTextSize(1);
       display.println("Instrument Select");
       display.setCursor(0,20);
-      display.setTextColor(BLACK, WHITE);
-      display.print(instrumentNames[sequence[selectedSequence].instrument] );
+      if (menuSelection == 0){
+        display.setTextColor(BLACK, WHITE);
+      }
+      display.println(instrumentNames[sequence[selectedSequence].instrument] );
+      if (menuSelection == 1){
+        display.setTextColor(BLACK, WHITE);
+      } else {
+        display.setTextColor(WHITE, BLACK);
+      }
+      display.println("volume: " + String(sequence[selectedSequence].volume) );
+      if (menuSelection == 2){
+        display.setTextColor(BLACK, WHITE);
+      } else {
+        display.setTextColor(WHITE, BLACK);
+      }
+      display.println("bank: " + String(sequence[selectedSequence].bank) );
       break;
  //   case SEQUENCE_TRAN:
  //     nonBlockingRainbow(2, generatorSkip, 13 );
@@ -206,6 +220,14 @@ void menuItem(uint8_t menuItem){
  //     display.println("Transpose 12 notes");
  //     display.println("Transpose Off");
  //     
+      break;
+
+    case GLOBAL_FILE:
+      display.setTextColor(WHITE);
+      display.setCursor(0,1);
+      display.setTextSize(1);
+
+      display.println("Delete Save File?");
       break;
 
     default:

@@ -14,6 +14,7 @@ void Sequencer::initialize(uint8_t ch, uint8_t stepCount, uint8_t beatCount, flo
 	this->sequenceTimer = 0;
   this->instrument = 0;
   this->instType = 0;
+  this->volume = 100;
 	//for (int i=0; i < 16; i++){
   //  stepData[i].gateLength = 1;
   //  stepData[i].velocity = 127;
@@ -30,6 +31,8 @@ void Sequencer::initNewSequence(){
   beatCount = 4;
   quantizeKey = 0;
   instrument = 0;
+  volume = 100;
+  bank = 0;
   instType = 2; //initialized regular instrument
   for(int n=0; n < 16; n++){
     stepData[n].pitch      = 0;

@@ -21,7 +21,8 @@ void initializeFlashMemory(){
     Serial.println("SD Card initialization failed!");
     return;
   }
-    SD.remove("data.txt");
+  // THIS IS THE LINE THAT DELETES THE DATAFILE EVERY TIME! 
+  // deleteSaveFile();
   if (SD.exists("data.txt")) {
     Serial.println("data.txt exists.");
   } else {
@@ -33,6 +34,14 @@ void initializeFlashMemory(){
   Serial.println("SD Card and save file initialization complete.");
 }
  
+
+void deleteSaveFile(){
+
+  SD.remove("data.txt");
+  loadPattern(0);
+
+}
+
 void savePattern(uint8_t pattern) {
   Serial.println("Saving to SD Card - " + String(micros()));
   need2save = false;  
@@ -48,6 +57,8 @@ void savePattern(uint8_t pattern) {
       + sizeof(sequence[0].quantizeKey) 
       + sizeof(sequence[0].instrument) 
       + sizeof(sequence[0].instType) 
+      + sizeof(sequence[0].volume) 
+      + sizeof(sequence[0].bank) 
     )); 
   
   	Serial.println("seq index: " + String(i) + " " + String(index) 
@@ -58,6 +69,8 @@ void savePattern(uint8_t pattern) {
       + "\tquantizeKey: " + String(sizeof(sequence[0].quantizeKey) )
       + "\tinstrument: " + String(sizeof(sequence[0].instrument) )
       + "\tinstType: " + String(sizeof(sequence[0].instType) )
+      + "\tvolume: " + String(sizeof(sequence[0].volume) )
+      + "\tbank: " + String(sizeof(sequence[0].bank) )
       );
 
     saveData.seek(index);
@@ -67,6 +80,8 @@ void savePattern(uint8_t pattern) {
     saveData.write( (byte*)&sequence[i].quantizeKey, sizeof(sequence[i].quantizeKey));
     saveData.write( (byte*)&sequence[i].instrument,  sizeof(sequence[i].instrument));
     saveData.write( (byte*)&sequence[i].instType,    sizeof(sequence[i].instType));
+    saveData.write( (byte*)&sequence[i].volume,      sizeof(sequence[i].volume));
+    saveData.write( (byte*)&sequence[i].bank,      sizeof(sequence[i].bank));
   }
   saveData.close();
 	Serial.println("Done saving to SD..." + String(micros()));
@@ -90,6 +105,8 @@ void loadPattern(uint8_t pattern) {
       + sizeof(sequence[0].quantizeKey) 
       + sizeof(sequence[0].instrument) 
       + sizeof(sequence[0].instType) 
+      + sizeof(sequence[0].volume) 
+      + sizeof(sequence[0].bank) 
     ));
     Serial.println("seeking to index: " + String(index) + " for sequence " + String(i) + "\t\tfileSize: " + saveData.size());
     
@@ -108,6 +125,8 @@ void loadPattern(uint8_t pattern) {
     saveData.read( (byte*)&sequence[i].quantizeKey, sizeof(sequence[i].quantizeKey));
     saveData.read( (byte*)&sequence[i].instrument,  sizeof(sequence[i].instrument));
     saveData.read( (byte*)&sequence[i].instType,    sizeof(sequence[i].instType));
+    saveData.read( (byte*)&sequence[i].volume,      sizeof(sequence[i].volume));
+    saveData.read( (byte*)&sequence[i].bank,      sizeof(sequence[i].bank));
 
     if (sequence[i].instType == 0 || saveData.size() <= index){
       Serial.println("saveData not available, initializing sequence");
@@ -117,6 +136,9 @@ void loadPattern(uint8_t pattern) {
     }
     Serial.println("reading complete!");
     
+    sam2695.programChange(0, i, sequence[i].instrument);
+    sam2695.setChannelVolume(i, sequence[i].volume);
+
     // if no steps are set, it is an empty sequence. initialize a new default sequence.
   // if (sequence[i].instType == 0 ) {
   //   Serial.println("###### INITIALIZING NEW SEQUENCE ######");

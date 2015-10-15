@@ -204,18 +204,23 @@ void encoderLoop(){
         }
         break;
       case SEQUENCE_INST:
-          int instBuffer = sequence[selectedSequence].instrument;
-          sequence[selectedSequence].instrument = positive_modulo(knob1Buffer,127);
-          sam2695.programChange(0, selectedSequence, sequence[selectedSequence].instrument);
-
+        int instBuffer = sequence[selectedSequence].instrument;
+        switch(menuSelection){
+          case 0:
+            sequence[selectedSequence].instrument = positive_modulo(stepModeBuffer+knob1Buffer,127);
+            sam2695.programChange(0, selectedSequence, sequence[selectedSequence].instrument);
+            break;
+          case 1: 
+            sequence[selectedSequence].volume = positive_modulo(stepModeBuffer+knob1Buffer, 127) ;
+            sam2695.setChannelVolume(selectedSequence, sequence[selectedSequence].volume);
+            break;
+          case 2: 
+            sequence[selectedSequence].bank = positive_modulo(stepModeBuffer+knob1Buffer, 127) ;
+            sam2695.setChannelBank(selectedSequence, sequence[selectedSequence].bank);
+            break;
+        }
         break;
-
-
       }
-
-
-
-
   }
 
 /*
@@ -288,15 +293,7 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
 
       switch(buttonNum){
         case 0:
-          Serial.println("Clear All Notes");
-          for(int i=0; i <16; i++){
-            sequence[selectedSequence].stepData[i].gateType = 0;//random(2);
-            sequence[selectedSequence].stepData[i].gateLength = 1;//random(2);
-            sequence[selectedSequence].stepData[i].velocity = 72;//random(2);
-            sequence[selectedSequence].setStepPitch(i, 24);
-          }
-          sequence[selectedSequence].stepCount = 16;//random(2);
-          sequence[selectedSequence].beatCount = 4;//random(2);
+          sequence[selectedSequence].initNewSequence();
           settingMode = 0;
           break;
         case 4:
@@ -355,7 +352,33 @@ void menuItemButtonHandler(uint8_t selectedMode, uint8_t buttonNum){
       }
       break;
 
+    case SEQUENCE_INST:
+      switch(buttonNum){
+        case 0:
+          menuSelection = 0;
+          stepModeBuffer = sequence[selectedSequence].instrument;
+          break;
+        case 4:
+          menuSelection = 1;
+          stepModeBuffer = sequence[selectedSequence].volume;
+          break;
+        case 8:
+          menuSelection = 2;
+          stepModeBuffer = sequence[selectedSequence].bank;
+          break;
+      }
+      break;
 
+
+    case GLOBAL_FILE:
+      switch(buttonNum){
+          case 0:
+            deleteSaveFile();
+            loadPattern(0);
+            settingMode = 0;
+          break;
+      }
+      break;
    }
 
 };

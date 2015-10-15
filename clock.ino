@@ -21,10 +21,8 @@ void masterClockFunc(){
 // if (printTimer > 200000) {
 //   Serial.println("avgInterval: " + String(avgInterval) + "\ttimerAvg: " + String(timerAvg) + "\tavgIntervalJitter: " + String(avgIntervalJitter));
 //   printTimer = 0;
-// }
-
+//}
   iter = iter + 1;
-
  //  Serial.println("timer loop 2");
   if(playing){
 
@@ -157,6 +155,9 @@ void masterClockFunc(){
 
   wasPlaying = playing;
   lastTimer = loopTimer;
+
+
+
 }
     // every beat,
     //  run the sequencer to determine what notes
