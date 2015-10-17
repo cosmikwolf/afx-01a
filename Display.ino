@@ -132,6 +132,7 @@ void menuItem(uint8_t menuItem){
       display.println("Clear All Notes");
       display.println("Random some notes");
       display.println("Random all notes");
+      display.println("delete save file");
 
       break;
 
