@@ -67,7 +67,7 @@ void masterClockFunc(){
         tempoBlip = !tempoBlip;
         internalClockTimer = 0;
        // Serial.print(" b5 ");
-      }
+      } 
     } else {
       // ext clock sync
       for (int i=0; i< sequenceCount; i++){
@@ -124,6 +124,11 @@ void masterClockFunc(){
           }
 
           */
+
+  for (int i=0; i<8; i++){
+  //  ad5676.setVoltage(i, map(noteData[i].noteOnArray[n], 0,127,0,65535 ) );
+  } 
+
           sam2695.noteOn(noteData[i].channel, noteData[i].noteOnArray[n], 127);// noteData[i].noteVelArray[n]);
           MIDI.sendNoteOn(noteData[i].noteOnArray[n], noteData[i].noteVelArray[n], noteData[i].channel);
 

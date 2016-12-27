@@ -179,7 +179,7 @@ void setup(){
   
   Serial.println("Initializing Neopixels");
   pixels.begin();
-  pixels.setBrightness(45);
+  pixels.setBrightness(100);
   
   Serial.println("Initializing Display");
   displayStartup();
@@ -248,14 +248,41 @@ void setup(){
  }
 
 uint8_t uiLoopFuncMultiplexer = 0;
+bool onoff;
+uint16_t voltage = 0;
 elapsedMicros counter;
 
 void uiLoopFunc(){
+
     float a = counter/10000.0;
-  uint16_t n = (sin(a)+1.0) * 32767.5;
+    uint16_t n =  (sin(a)+1.0) * 32767.5;
   //  ad5676.setVoltage(5, n);
+
+//if (counter > 500000 && onoff == false){
+//   voltage = voltage + 256;
+//  if (voltage > 65536){
+//    voltage = 0;
+//  }
+//  ad5676.setVoltage(2, 0);
+//  delay(10);
+//  ad5676.setVoltage(4, 65535-voltage);
+//  ad5676.setVoltage(2, 65535);
+//  onoff = true;
+//}
+//
+//
+//if (counter > 1000000){
+//  ad5676.setVoltage(2, 0);
+//  delay(10);
+//  ad5676.setVoltage(4, voltage);
+//  ad5676.setVoltage(2, 65535);
+//  onoff = false;
+//  counter = 0;
+//}
+//
+//
   for (int i=0; i<8; i++){
-    ad5676.setVoltage(i, n);
+  // ad5676.setVoltage(i, n);
   }
 
 }
